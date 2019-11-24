@@ -3,9 +3,9 @@ from multidict import CIMultiDict
 
 from utils import log_utils
 from core.forwarder import forward
-from models.pattern import Checker
-from models.saver import Saver
-from proxy_entrance import proxy_manager, pattern_manager
+from core.saver import Saver
+from models.pattern import Checker, PatternManager
+from models.proxy import ProxyManager
 
 
 logger = log_utils.LogHandler('server', file=True)
@@ -23,9 +23,12 @@ class ProxyServer(web.Application):
     async def core_session(app):
         checker = Checker()
         saver = Saver()
+        proxy_manager = ProxyManager()
+        pattern_manager = PatternManager()
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()
+        await proxy_manager.add_proxies(100)
         app['pom'] = proxy_manager
         app['pam'] = pattern_manager
         app['ck'] = checker
@@ -34,6 +37,7 @@ class ProxyServer(web.Application):
         await app['pam'].__aexit__()
         await app['pom'].__aexit__()
         await app['sv'].__aexit__()
+        await app['mt'].__aexit__()
 
     @staticmethod
     def _gen_headers(r):

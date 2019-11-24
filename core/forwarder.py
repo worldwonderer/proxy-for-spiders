@@ -10,6 +10,7 @@ async def forward(method, url, pam, pom, checker, saver, **kwargs):
     style = kwargs.get('style', 'score')
 
     pattern_str, check_rule_json = pam.t.closest_pattern(url)
+    await pom.add_proxies_for_pattern(pattern_str)
     proxies = await pom.select_proxies(pattern_str, prefer_used=True, style=style)
     pattern = Pattern(pattern_str, checker, json.loads(check_rule_json), saver)
 

@@ -45,7 +45,7 @@ class Saver(object):
             else:
                 existed_time = int(time.time()) - proxy.insert_time
                 if existed_time > proxy.valid_time > 0:
-                    proxy.score = -100
+                    await self._del_proxy_in_pattern(pattern_str, proxy)
                 else:
                     proxy.score -= 1
             await self.redis.hset((pattern_str, proxy_str, proxy.dumps()))
@@ -57,3 +57,12 @@ class Saver(object):
             self._save(pattern_str, response)
         ]
         await asyncio.gather(*tasks)
+
+    async def _del_proxy_in_pattern(self, pattern_str, proxy):
+        fail_key = pattern_str + '_fail'
+        remain_time = proxy.insert_time + proxy.valid_time - int(time.time())
+        if proxy.score <= -10 or (remain_time < 0 < proxy.valid_time and not proxy.used):
+            await self.redis.hdel(pattern_str, str(proxy))
+            if proxy.used:
+                proxy.delete_time = int(time.time())
+                await self.redis.hset(fail_key, proxy, proxy.dumps())

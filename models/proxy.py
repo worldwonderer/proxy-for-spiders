@@ -66,6 +66,8 @@ class ProxyManager(object):
     SCORE_RANDOM_SCOPE = 10
     INIT_SCORE = 10
     RENEW_TIME = 8 * 60 * 60
+    PROXY_NUM_SHRESHOLD = 100
+    ADD_NUM = 30
     _concurrent_semaphore = dict()
 
     def __init__(self, redis_addr='redis://localhost', tags_source_map=None):
@@ -134,6 +136,12 @@ class ProxyManager(object):
                 return False
             await self.redis.hset(p, str(proxy), proxy.dumps())
         return True
+
+    async def add_proxies_for_pattern(self, pattern_str):
+        proxy_num = await self.redis.hlen(pattern_str)
+        if proxy_num < self.PROXY_NUM_SHRESHOLD:
+            await self.sync_public(pattern_str)
+            await self.add_proxies(self.ADD_NUM, pattern_str)
 
 
 class ProxySource(object):

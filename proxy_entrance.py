@@ -8,16 +8,6 @@ except ImportError:
 from aiohttp import web
 
 from core import proxy
-from models.proxy import ProxyManager
-from models.pattern import PatternManager
-from models.saver import Saver
-from models.pattern import Checker
-
-
-proxy_manager = ProxyManager()
-pattern_manager = PatternManager()
-saver = Saver()
-checker = Checker()
 
 
 def run_server(port=None):
