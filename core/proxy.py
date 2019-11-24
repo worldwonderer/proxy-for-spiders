@@ -1,7 +1,7 @@
 from aiohttp import web
 from multidict import CIMultiDict
 
-from utils import log_utils
+import log_utils
 from core.forwarder import forward
 from core.saver import Saver
 from models.pattern import Checker, PatternManager

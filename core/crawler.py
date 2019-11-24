@@ -4,7 +4,7 @@ import traceback
 
 import aiohttp
 
-from utils import log_utils
+import log_utils
 from models.response import Response, FailedResponse
 
 
