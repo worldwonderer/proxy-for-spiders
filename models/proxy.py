@@ -118,7 +118,7 @@ class ProxyManager(object):
                 added_num += 1
         return added_num
 
-    async def add_proxies(self, num, pattern_str='public_proxies'):
+    async def add_proxies(self, num=30, pattern_str='public_proxies'):
         added_num = 0
         for source in proxy_sources:
             async for proxy in source.fetch_proxies():

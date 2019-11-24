@@ -1,4 +1,3 @@
-import asyncio
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -29,7 +28,7 @@ class ProxyServer(web.Application):
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()
-        await proxy_manager.add_proxies(100)
+        await proxy_manager.add_proxies()
         app['pom'] = proxy_manager
         app['pam'] = pattern_manager
         app['ck'] = checker
