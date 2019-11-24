@@ -9,6 +9,5 @@
 ## 使用方法
 1. Clone the repository
 2. Run `pip install -r requirements.txt`
-3. Run `python proxy_entrance.py
-
-测试: curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"
+3. Run `python proxy_entrance.py`
+4. For test run `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
