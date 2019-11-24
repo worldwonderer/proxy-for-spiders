@@ -13,5 +13,4 @@ async def forward(method, url, pam, pom, checker, saver, **kwargs):
     await pom.add_proxies_for_pattern(pattern_str)
     proxies = await pom.select_proxies(pattern_str, prefer_used=True, style=style)
     pattern = Pattern(pattern_str, checker, json.loads(check_rule_json), saver)
-
     return await crawl(method, url, proxies, pattern=pattern, data=content, headers=headers)

@@ -25,9 +25,10 @@ class Saver(object):
 
     async def _save(self, key, response):
         key += '_result'
-        info = await response.info()
-        await asyncio.gather(*[self.redis.lpush(key, info),
-                               self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM-1)])
+        if hasattr(response, 'info'):
+            info = await response.info()
+            await asyncio.gather(*[self.redis.lpush(key, info),
+                                 self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM-1)])
 
     async def _score_counter(self, pattern_str, proxy_str, valid):
         if pattern_str not in self.pattern_lock_map:
@@ -44,11 +45,12 @@ class Saver(object):
                     proxy.score += 1
             else:
                 existed_time = int(time.time()) - proxy.insert_time
-                if existed_time > proxy.valid_time > 0:
+                if proxy.valid_time and existed_time > proxy.valid_time > 0:
                     await self._del_proxy_in_pattern(pattern_str, proxy)
                 else:
                     proxy.score -= 1
-            await self.redis.hset((pattern_str, proxy_str, proxy.dumps()))
+            proxy.used = True
+            await self.redis.hset(pattern_str, proxy_str, proxy.dumps())
 
     async def save_result(self, pattern_str, proxy_str, response):
         tasks = [

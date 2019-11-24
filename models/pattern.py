@@ -35,9 +35,10 @@ class Checker(object):
         for word in self.global_blacklist:
             if word in text:
                 return 'global blacklist check failed, get {}'.format(word)
-        if rule == 'whitelist' and value not in text:
-            return 'whitelist check failed, {} not found'.format(value)
-        if len(rule.strip()) != 0 and len(value.strip()) != 0:
+        if rule == 'whitelist':
+            if value not in text:
+                return 'whitelist check failed, {} not found'.format(value)
+        elif len(rule.strip()) != 0 and len(value.strip()) != 0:
             tb = self._xpath_checker(text, rule, value)
             if tb is not None:
                 return tb

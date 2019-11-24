@@ -1,3 +1,4 @@
+import asyncio
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -57,7 +58,10 @@ class ProxyServer(web.Application):
         logger.info('received request {} from {}'.format(request.url, request.remote))
 
         r = await forward(request.method, str(request.url), pam, pom, ck, sv, headers=request.headers, body=body)
-        if r.traceback is not None:
+
+        if r is None:
+            return web.Response(status=417, text='unable to get any response')
+        elif r.traceback is not None:
             if isinstance(r.traceback, list):
                 tb = ''.join(r.traceback)
             else:
@@ -66,3 +70,4 @@ class ProxyServer(web.Application):
         else:
             text = await r.text()
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
+
