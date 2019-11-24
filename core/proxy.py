@@ -34,10 +34,9 @@ class ProxyServer(web.Application):
         app['ck'] = checker
         app['sv'] = saver
         yield
-        await app['pam'].__aexit__()
-        await app['pom'].__aexit__()
-        await app['sv'].__aexit__()
-        await app['mt'].__aexit__()
+        await app['pam'].__aexit__(None, None, None)
+        await app['pom'].__aexit__(None, None, None)
+        await app['sv'].__aexit__(None, None, None)
 
     @staticmethod
     def _gen_headers(r):
