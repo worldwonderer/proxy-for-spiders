@@ -1,10 +1,10 @@
 # proxy-for-spiders
 
-由于开源代理池项目有低可用率的痛点，基于 Asyncio 编写异步的正向代理服务器，拥有增倍转发、返回结果校验、分站点计分等特性
+目前开源代理池项目有低可用率的痛点。该代理服务器基于 Asyncio 编写，拥有增倍转发、返回结果校验、分站点计分等特性。
 
 ## 依赖环境
-python3.7
-redis
+* Python3.6 以上
+* redis
 
 ## 使用方法
 1. Clone the repository
