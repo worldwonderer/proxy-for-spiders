@@ -107,6 +107,9 @@ class PatternManager(object):
     async def update(self, pattern, check_rule):
         await self.add(pattern, check_rule)
 
+    async def gen_random_cookies(self, pattern_str):
+        return await self.redis.srandmember(pattern_str + '_cookies')
+
 
 class CheckPatternTrie(CharTrie):
 
