@@ -1,3 +1,5 @@
+import ipaddress
+
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -28,7 +30,7 @@ class ProxyServer(web.Application):
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()
-        await proxy_manager.add_proxies()
+        await proxy_manager.add_proxies_for_pattern('public_proxies')
         app['pom'] = proxy_manager
         app['pam'] = pattern_manager
         app['ck'] = checker
@@ -48,6 +50,12 @@ class ProxyServer(web.Application):
         return res_headers
 
     async def receive_request(self, request):
+        if ipaddress.ip_address(request.remote).is_private:
+            return await self.proxy_info(request)
+        else:
+            return await self.forward_request(request)
+
+    async def forward_request(self, request):
         pam = request.app['pam']
         pom = request.app['pom']
         ck = request.app['ck']
@@ -60,13 +68,12 @@ class ProxyServer(web.Application):
 
         if r is None:
             return web.Response(status=417, text='unable to get any response')
-        elif r.traceback is not None:
-            if isinstance(r.traceback, list):
-                tb = ''.join(r.traceback)
-            else:
-                tb = r.traceback
+        elif r.traceback:
+            tb = ''.join(r.traceback)
             return web.Response(status=417, text=tb)
         else:
             text = await r.text()
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
 
+    async def proxy_info(self, request):
+        return web.Response(status=200, text="hello world")

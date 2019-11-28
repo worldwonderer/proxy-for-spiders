@@ -12,7 +12,7 @@ from core.crawler import crawl
 
 class Proxy(object):
 
-    INIT_SCORE = 10
+    INIT_SCORE = 0
 
     def __init__(self, ip, port, **kwargs):
         self.ip = ip
@@ -22,6 +22,7 @@ class Proxy(object):
         self.tag = kwargs.get('tag')
         self._score = self.INIT_SCORE
         self.used = False
+        self.support_https = kwargs.get('support_https', False)
 
     @property
     def score(self):
@@ -44,6 +45,7 @@ class Proxy(object):
             "valid_time": self.valid_time,
             "insert_time": self.insert_time,
             "tag": self.tag,
+            "support_https": self.support_https
         })
 
     def __str__(self):
@@ -53,7 +55,7 @@ class Proxy(object):
     def loads(cls, j):
         d = json.loads(j)
         proxy = Proxy(d['ip'], d['port'], valid_time=d.get('valid_time'),
-                      insert_time=d.get('insert_time'), tag=d.get('tag'))
+                      insert_time=d['insert_time'], tag=d.get('tag'), support_https=d.get('support_https', False))
         proxy.score = d['score']
         proxy.used = d['used']
         return proxy
@@ -70,7 +72,6 @@ class ProxyManager(object):
 
     REQUEST_CONCURRENT = 3
     SCORE_RANDOM_SCOPE = 10
-    INIT_SCORE = 10
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 100
     ADD_NUM = 30
@@ -89,12 +90,15 @@ class ProxyManager(object):
             self.redis.close()
             await self.redis.wait_closed()
 
-    async def proxies(self, pattern_str='public_proxies'):
+    async def proxies(self, need_https=False, pattern_str='public_proxies'):
         d = await self.redis.hgetall(pattern_str)
-        return [Proxy.loads(v) for _, v in d.items()]
+        proxies = [Proxy.loads(v) for _, v in d.items()]
+        if need_https:
+            proxies = [p for p in proxies if p.support_https]
+        return proxies
 
-    async def select_proxies(self, pattern_str, prefer_used=True, style='score'):
-        proxies = await self.proxies(pattern_str)
+    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, style='score'):
+        proxies = await self.proxies(need_https, pattern_str)
         concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
         if style == 'shuffle':
             selected_proxies = random.sample(proxies, concurrent_num)
@@ -118,7 +122,7 @@ class ProxyManager(object):
                 added_num += 1
         return added_num
 
-    async def add_proxies(self, num=30, pattern_str='public_proxies'):
+    async def add_proxies(self, pattern_str, num=30):
         added_num = 0
         for source in proxy_sources:
             async for proxy in source.fetch_proxies():
@@ -128,7 +132,7 @@ class ProxyManager(object):
                         break
         return added_num
 
-    async def _add_proxy(self, proxy, pattern_str='public_proxies'):
+    async def _add_proxy(self, proxy, pattern_str):
         for p in {pattern_str, 'public_proxies'}:
             del_info_json = await self.redis.hget(p + '_fail', str(proxy))
             if del_info_json is not None:
@@ -146,8 +150,9 @@ class ProxyManager(object):
     async def add_proxies_for_pattern(self, pattern_str):
         proxy_num = await self.redis.hlen(pattern_str)
         if proxy_num < self.PROXY_NUM_SHRESHOLD:
-            await self.sync_public(pattern_str)
-            await self.add_proxies(self.ADD_NUM, pattern_str)
+            if pattern_str != 'public_proxies':
+                await self.sync_public(pattern_str)
+            await self.add_proxies(pattern_str, self.ADD_NUM)
 
 
 class ProxySource(object):
@@ -168,24 +173,25 @@ class ProxyFile(ProxySource):
         with open(self.file_path, 'r') as f:
             proxy_candidates = re.findall(self.proxy_pattern, f.read())
             for proxy in proxy_candidates:
-                yield Proxy.parse(proxy, tag=self.tag)
+                yield Proxy.parse(proxy, tag=self.tag, support_https=True)
 
 
 class ProxyApi(ProxySource):
 
-    def __init__(self, tag, api):
+    def __init__(self, tag, api, valid_time):
         self.api = api
         self.tag = tag
+        self.valid_time = valid_time
 
     async def fetch_proxies(self):
         r = await crawl("GET", self.api)
         text = await r.text()
         proxy_candidates = re.findall(self.proxy_pattern, text)
         for proxy in proxy_candidates:
-            yield Proxy.parse(proxy, tag=self.tag)
+            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time)
 
 
 proxy_sources = {
     ProxyFile('file', './conf/proxy.txt'),
-    ProxyApi('free_api', 'http://118.24.52.95/get_all/')
+    ProxyApi('free_api', 'http://118.24.52.95/get_all/', 300)
 }

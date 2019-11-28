@@ -25,8 +25,8 @@ class Saver(object):
 
     async def _save(self, key, response):
         key += '_result'
-        if hasattr(response, 'info'):
-            info = await response.info()
+        if hasattr(response, 'info_json'):
+            info = await response.info_json()
             await asyncio.gather(*[self.redis.lpush(key, info),
                                  self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM-1)])
 

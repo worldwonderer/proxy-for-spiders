@@ -4,14 +4,14 @@ from aiohttp import ClientResponse
 
 
 class FailedResponse(object):
-    pass
+    traceback = list()
 
 
 class Response(ClientResponse):
 
     proxy = None
     valid = None
-    traceback = None
+    traceback = list()
 
     def get_encoding(self):
         encoding = super(Response, self).get_encoding()
@@ -19,7 +19,7 @@ class Response(ClientResponse):
             encoding = 'gbk'
         return encoding
 
-    async def info(self):
+    async def info_json(self):
         text = await self.text()
         return json.dumps({
             'url': str(self.url),
