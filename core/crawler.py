@@ -23,7 +23,7 @@ async def _crawl(method, url, session, **kwargs):
             r.__class__ = Response
     except asyncio.CancelledError:
         r = FailedResponse()
-        r.traceback = ['cancelled'+'\n']
+        r.traceback = [str(proxy)+'\n' + 'cancelled'+'\n']
     except Exception as e:
         r = FailedResponse()
         r.traceback = [str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
@@ -35,8 +35,8 @@ async def _crawl_with_check(method, url, session, pattern, **kwargs):
     r = await _crawl(method, url, session, **kwargs)
     if len(r.traceback) == 0:
         r.traceback = await pattern.check(r)
-    r.valid = not r.traceback
-    if r.traceback != 'cancelled':
+    r.valid = len(r.traceback) == 0
+    if 'cancelled' not in ''.join(r.traceback):
         await pattern.score_and_save(kwargs['proxy'], r)
     return r
 
