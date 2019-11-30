@@ -1,5 +1,3 @@
-import ipaddress
-
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -50,10 +48,9 @@ class ProxyServer(web.Application):
         return res_headers
 
     async def receive_request(self, request):
-        if ipaddress.ip_address(request.remote).is_private:
-            return await self.proxy_info(request)
-        else:
-            return await self.forward_request(request)
+        # to be implemented: if show proxy info when visit server directly
+        # return await self.proxy_info(request)
+        return await self.forward_request(request)
 
     async def forward_request(self, request):
         pam = request.app['pam']

@@ -28,4 +28,3 @@ class Response(ClientResponse):
             'text': text,
             'proxy': str(self.proxy)
         })
-
