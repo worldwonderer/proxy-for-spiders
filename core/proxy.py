@@ -1,3 +1,6 @@
+from socket import AddressFamily
+
+import psutil
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -15,6 +18,7 @@ class ProxyServer(web.Application):
 
     def __init__(self):
         super(ProxyServer, self).__init__()
+        self.ips = self._get_self_ips()
         self.cleanup_ctx.append(self.core_session)
         self.add_routes([web.get('/{path:.*}', self.receive_request)])
         self.add_routes([web.post('/{path:.*}', self.receive_request)])
@@ -47,10 +51,21 @@ class ProxyServer(web.Application):
         res_headers['Via-Proxy'] = str(r.proxy)
         return res_headers
 
+    @staticmethod
+    def _get_self_ips():
+        ips = list()
+        addresses = psutil.net_if_addrs()
+        for _, i in addresses.items():
+            for f in i:
+                if f.family == AddressFamily.AF_INET:
+                    ips.append(f.address)
+        return ips
+
     async def receive_request(self, request):
-        # to be implemented: if show proxy info when visit server directly
-        # return await self.proxy_info(request)
-        return await self.forward_request(request)
+        if request.url.host in self.ips:
+            return await self.dashboard(request)
+        else:
+            return await self.forward_request(request)
 
     async def forward_request(self, request):
         pam = request.app['pam']
@@ -72,5 +87,5 @@ class ProxyServer(web.Application):
             text = await r.text()
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
 
-    async def proxy_info(self, request):
+    async def dashboard(self, request):
         return web.Response(status=200, text="hello world")
