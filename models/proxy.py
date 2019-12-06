@@ -37,7 +37,10 @@ class Proxy(object):
         self._score = value
 
     def dumps(self):
-        return json.dumps({
+        return json.dumps(self.to_dict())
+
+    def to_dict(self):
+        return {
             "score": self.score,
             "ip": self.ip,
             "port": self.port,
@@ -46,7 +49,7 @@ class Proxy(object):
             "insert_time": self.insert_time,
             "tag": self.tag,
             "support_https": self.support_https
-        })
+        }
 
     def __str__(self):
         return 'http://{0}:{1}'.format(self.ip, self.port)
@@ -90,11 +93,13 @@ class ProxyManager(object):
             self.redis.close()
             await self.redis.wait_closed()
 
-    async def proxies(self, need_https=False, pattern_str='public_proxies'):
+    async def proxies(self, need_https=False, pattern_str='public_proxies', format_type='raw'):
         d = await self.redis.hgetall(pattern_str)
         proxies = [Proxy.loads(v) for _, v in d.items()]
         if need_https:
             proxies = [p for p in proxies if p.support_https]
+        if format_type == 'dict':
+            proxies = [p.to_dict() for p in proxies]
         return proxies
 
     async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, style='score'):

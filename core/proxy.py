@@ -16,6 +16,14 @@ logger = log_utils.LogHandler('server', file=True)
 
 class ProxyServer(web.Application):
 
+    dashboard_data_template = {
+        'code': 20000,
+        'data': {
+            'items': [],
+            'total': 0
+        }
+    }
+
     def __init__(self):
         super(ProxyServer, self).__init__()
         self.ips = self._get_self_ips()
@@ -53,7 +61,7 @@ class ProxyServer(web.Application):
 
     @staticmethod
     def _get_self_ips():
-        ips = list()
+        ips = ['localhost']
         addresses = psutil.net_if_addrs()
         for _, i in addresses.items():
             for f in i:
@@ -87,5 +95,40 @@ class ProxyServer(web.Application):
             text = await r.text()
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
 
+    async def patterns(self, request):
+        r = self.dashboard_data_template.copy()
+        items = await request.app['pam'].patterns()
+        r['data']['items'] = items
+        r['data']['total'] = len(items)
+        return web.json_response(data=r)
+
+    async def proxies(self, request):
+        r = self.dashboard_data_template.copy()
+        items = await request.app['pom'].proxies(format_type='dict')
+        r['data']['items'] = items
+        r['data']['total'] = len(items)
+        return web.json_response(data=r)
+
+    async def login(self, request):
+        return web.json_response(data={'code': 20000, 'data': 'admin'})
+
+    async def user_info(self, request):
+        data = {
+            'roles': ['admin'],
+            'introduction': 'I am a super administrator',
+            'avatar': 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+            'name': 'Super Admin'
+        }
+        return web.json_response(data={'code': 20000, 'data': data})
+
     async def dashboard(self, request):
+        path = request.path
+        if path == '/dev-api/patterns':
+            return await self.patterns(request)
+        elif path == '/dev-api/proxies':
+            return await self.proxies(request)
+        elif path == '/dev-api/user/login':
+            return await self.login(request)
+        elif path == '/dev-api/user/info':
+            return await self.user_info(request)
         return web.Response(status=200, text="hello world")

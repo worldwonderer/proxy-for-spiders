@@ -87,7 +87,7 @@ class PatternManager(object):
 
     async def patterns(self):
         d = await self.redis.hgetall(self.key)
-        return [{'pattern': p, 'info': json.loads(v)} for p, v in d.items()]
+        return [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']} for p, v in d.items()]
 
     async def _init_trie(self):
         d = await self.redis.hgetall(self.key)

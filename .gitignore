@@ -111,3 +111,4 @@ log/
 
 # other
 .idea/
+conf/proxy.txt
