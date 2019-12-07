@@ -51,7 +51,7 @@ r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule'
 r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
 ```
 
-配置校验规则后，抓取https://movie.douban.com/subject/27119724/类似的页面后，proxy-for-spiders会对页面内容做校验，优先返回符合规则的response，并对proxy计分
+配置校验规则后，抓取https://movie.douban.com/subject/27119724/ 类似的页面，proxy-for-spiders会对页面内容做校验，优先返回符合规则的response，并对proxy计分
 
 ## 代理接入
 
