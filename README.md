@@ -33,7 +33,7 @@ global_blacklist = [
 ```
 
 ## 校验规则配置
-该项目校验规则基于pattern，pattern是目标站点的某个复用页面，通常有同样的URL前缀，有类似的HTML元素，例如豆瓣电影movie.douban.com/subject/
+校验规则基于pattern，pattern是目标站点的某个复用页面，通常有同样的URL前缀，有类似的HTML元素，例如豆瓣电影movie.douban.com/subject/
 
 目前支持两种校验规则的配置，
 1. whitelist，即如果response中包含了这些关键词，判定response有效
