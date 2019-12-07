@@ -24,19 +24,19 @@ class ProxyServer(web.Application):
         }
     }
 
-    def __init__(self):
+    def __init__(self, config):
         super(ProxyServer, self).__init__()
         self.ips = self._get_self_ips()
         self.cleanup_ctx.append(self.core_session)
         self.add_routes([web.get('/{path:.*}', self.receive_request)])
         self.add_routes([web.post('/{path:.*}', self.receive_request)])
+        self._config = config
 
-    @staticmethod
-    async def core_session(app):
-        checker = Checker()
-        saver = Saver()
-        proxy_manager = ProxyManager()
-        pattern_manager = PatternManager()
+    async def core_session(self, app):
+        checker = Checker(global_blacklist=self._config.global_blacklist)
+        saver = Saver(redis_addr=self._config.redis_addr)
+        proxy_manager = ProxyManager(redis_addr=self._config.redis_addr)
+        pattern_manager = PatternManager(redis_addr=self._config.redis_addr)
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()

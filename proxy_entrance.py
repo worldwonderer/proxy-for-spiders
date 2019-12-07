@@ -7,11 +7,12 @@ except ImportError:
 
 from aiohttp import web
 
-from core import proxy
+from core import proxy_server
+from config import conf
 
 
 def run_server(port=None):
-    app = proxy.ProxyServer()
+    app = proxy_server.ProxyServer(conf)
     web.run_app(app, port=port)
 
 

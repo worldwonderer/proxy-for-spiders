@@ -19,7 +19,7 @@ async def forward(method, url, pam, pom, checker, saver, **kwargs):
 
 async def cookies_handler(headers, pam, pattern_str):
     if 'Need-Cookies' in headers:
-        j = await pam.gen_random_cookies(pattern_str)
+        j = await pam.get_cookies(pattern_str)
         if j is None:
             return
         headers.update(json.loads(j))
