@@ -1,5 +1,6 @@
 import sys
 import asyncio
+import datetime
 import traceback
 
 import aiohttp
@@ -37,6 +38,8 @@ async def _crawl_with_check(method, url, session, pattern, **kwargs):
         r.traceback = await pattern.check(r)
     r.valid = len(r.traceback) == 0
     if 'cancelled' not in ''.join(r.traceback):
+        now = datetime.datetime.now().strftime("%H:%M")
+        await pattern.counter(now, r.valid)
         await pattern.score_and_save(kwargs['proxy'], r)
     return r
 

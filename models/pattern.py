@@ -1,7 +1,10 @@
 import re
 import sys
 import json
+import asyncio
+import datetime
 import traceback
+from collections import OrderedDict
 
 import aioredis
 from lxml import etree
@@ -39,29 +42,55 @@ class Checker(object):
             if value not in text:
                 return 'whitelist check failed, {} not found'.format(value)
         elif len(rule.strip()) != 0 and len(value.strip()) != 0:
-            tb = self._xpath_checker(text, rule, value)
-            if tb is not None:
-                return tb
+            return self._xpath_checker(text, rule, value)
 
 
 class Pattern(object):
 
-    def __init__(self, pattern_str, checker, check_rule, saver=None):
+    def __init__(self, pattern_str, check_rule, checker, saver=None):
         self._pattern_str = pattern_str
         self.checker = checker
         self.saver = saver
         self.check_rule = check_rule
+        self.counter_lock = asyncio.Lock()
+        self.success_counter = OrderedDict()
+        self.fail_counter = OrderedDict()
 
     def __str__(self):
         return self._pattern_str
 
+    @property
+    def success_rate(self):
+        x = list()
+        y = list()
+        for t in self.success_counter:
+            if t in self.fail_counter:
+                y.append(self.success_counter[t]/self.fail_counter[t] + self.success_counter[t])
+            else:
+                y.append(100)
+            x.append(t)
+        return [x, y]
+
     async def check(self, response):
-        if response is None:
-            return False
         rule, value = self.check_rule['rule'], self.check_rule['value']
         text = await response.text()
-        tb = self.checker.check(response.status, text, rule, value)
+        result = self.checker.check(response.status, text, rule, value)
+        tb = list()
+        if isinstance(result, str):
+            tb = [result]
         return tb
+
+    async def counter(self, now, valid):
+        async with self.counter_lock:
+            c = self.success_counter if valid else self.fail_counter
+            if now in c:
+                c[now] += 1
+            else:
+                c[now] = 1
+            del_num = len(c) - 10
+            if del_num > 0:
+                for _ in range(del_num):
+                    c.popitem(last=False)
 
     async def score_and_save(self, proxy, response):
         if self.saver is None:
@@ -71,13 +100,16 @@ class Pattern(object):
 
 class PatternManager(object):
 
-    def __init__(self, redis_addr='redis://localhost'):
+    def __init__(self, checker, saver, redis_addr='redis://localhost'):
         self._redis_addr = redis_addr
+        self.checker = checker
+        self.saver = saver
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
         self.redis = await aioredis.create_redis_pool(self._redis_addr, encoding='utf8')
         self.t = await self._init_trie()
+        self._patterns = await self.patterns()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -85,9 +117,40 @@ class PatternManager(object):
             self.redis.close()
             await self.redis.wait_closed()
 
-    async def patterns(self):
+    async def patterns(self, format_type='raw'):
         d = await self.redis.hgetall(self.key)
-        return [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']} for p, v in d.items()]
+        patterns = [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']}
+                    for p, v in d.items()]
+        if format_type == 'raw':
+            patterns = [Pattern(pattern['pattern'],
+                                {'rule': pattern['rule'], 'value': pattern['value']},
+                                self.checker,
+                                self.saver
+                                ) for pattern in patterns]
+        return patterns
+
+    def get_pattern(self, pattern_str):
+        for pattern in self._patterns:
+            if str(pattern) == pattern_str:
+                return pattern
+
+    def status(self):
+        items = list()
+        patterns = self._patterns
+        now = datetime.datetime.now()
+        x = [(now-datetime.timedelta(minutes=i)).strftime("%H:%M") for i in range(9, -1, -1)]
+        for pattern in patterns:
+            times, values = pattern.success_rate
+            y = [0] * 10
+            for i, t in enumerate(times):
+                try:
+                    ind = x.index(t)
+                except ValueError:
+                    pass
+                else:
+                    y[ind] = values[i]
+            items.append({'pattern': str(pattern), 'serial': y})
+        return x, items
 
     async def _init_trie(self):
         d = await self.redis.hgetall(self.key)
@@ -98,6 +161,7 @@ class PatternManager(object):
 
     async def add(self, pattern, check_rule):
         self.t[str(pattern)] = json.dumps(check_rule)
+        pattern = Pattern(str(pattern), check_rule, self.checker, self.saver)
         await self.redis.hset(self.key, str(pattern), json.dumps(check_rule))
 
     async def delete(self, pattern):

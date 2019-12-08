@@ -1,3 +1,5 @@
+import copy
+import datetime
 from socket import AddressFamily
 
 import psutil
@@ -30,13 +32,14 @@ class ProxyServer(web.Application):
         self.cleanup_ctx.append(self.core_session)
         self.add_routes([web.get('/{path:.*}', self.receive_request)])
         self.add_routes([web.post('/{path:.*}', self.receive_request)])
+        self.add_routes([web.delete('/{path:.*}', self.receive_request)])
         self._config = config
 
     async def core_session(self, app):
         checker = Checker(global_blacklist=self._config.global_blacklist)
         saver = Saver(redis_addr=self._config.redis_addr)
         proxy_manager = ProxyManager(redis_addr=self._config.redis_addr)
-        pattern_manager = PatternManager(redis_addr=self._config.redis_addr)
+        pattern_manager = PatternManager(checker, saver, redis_addr=self._config.redis_addr)
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()
@@ -95,24 +98,53 @@ class ProxyServer(web.Application):
             text = await r.text()
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
 
+    async def dashboard(self, request):
+        dashboard_router = {
+            '/dev-api/patterns': self.patterns,
+            '/dev-api/pattern': self.pattern,
+            '/dev-api/proxies': self.proxies,
+            '/dev-api/user/login': self.login,
+            '/dev-api/user/logout': self.logout,
+            '/dev-api/user/info': self.user_info,
+            '/dev-api/status': self.status,
+        }
+        path = request.path
+        if path in dashboard_router:
+            return await dashboard_router[path](request)
+        return web.Response(status=200, text="hello world")
+
     async def patterns(self, request):
-        r = self.dashboard_data_template.copy()
-        items = await request.app['pam'].patterns()
+        r = copy.deepcopy(self.dashboard_data_template)
+        items = await request.app['pam'].patterns(format_type='dict')
         r['data']['items'] = items
         r['data']['total'] = len(items)
         return web.json_response(data=r)
 
     async def proxies(self, request):
-        r = self.dashboard_data_template.copy()
+        r = copy.deepcopy(self.dashboard_data_template)
         items = await request.app['pom'].proxies(format_type='dict')
         r['data']['items'] = items
         r['data']['total'] = len(items)
         return web.json_response(data=r)
 
     async def login(self, request):
+        # to be implemented
+        d = await request.json()
         return web.json_response(data={'code': 20000, 'data': 'admin'})
 
+    async def logout(self, request):
+        return web.json_response(data={'code': 20000, 'data': 'success'})
+
+    async def status(self, request):
+        r = copy.deepcopy(self.dashboard_data_template)
+        x, items = request.app['pam'].status()
+        r['data']['items'] = items
+        r['data']['x'] = x
+        r['data']['total'] = len(r['data']['items'])
+        return web.json_response(data=r)
+
     async def user_info(self, request):
+        # to be implemented
         data = {
             'roles': ['admin'],
             'introduction': 'I am a super administrator',
@@ -121,14 +153,10 @@ class ProxyServer(web.Application):
         }
         return web.json_response(data={'code': 20000, 'data': data})
 
-    async def dashboard(self, request):
-        path = request.path
-        if path == '/dev-api/patterns':
-            return await self.patterns(request)
-        elif path == '/dev-api/proxies':
-            return await self.proxies(request)
-        elif path == '/dev-api/user/login':
-            return await self.login(request)
-        elif path == '/dev-api/user/info':
-            return await self.user_info(request)
-        return web.Response(status=200, text="hello world")
+    async def pattern(self, request):
+        d = await request.json()
+        if request.method == 'POST':
+            await request.app['pam'].add(d['pattern'], {'rule': d['rule'], 'value': d['value']})
+        elif request.method == 'DELETE':
+            await request.app['pam'].delete(d['pattern'])
+        return web.json_response(data={'code': 20000, 'data': 'success'})

@@ -43,12 +43,14 @@ class Saver(object):
                     proxy.score = 0
                 elif 0 <= proxy.score < 5:
                     proxy.score += 1
+
             else:
                 existed_time = int(time.time()) - proxy.insert_time
                 if proxy.valid_time and existed_time > proxy.valid_time > 0:
                     await self._del_proxy_in_pattern(pattern_str, proxy)
                 else:
                     proxy.score -= 1
+
             proxy.used = True
             await self.redis.hset(pattern_str, proxy_str, proxy.dumps())
 
