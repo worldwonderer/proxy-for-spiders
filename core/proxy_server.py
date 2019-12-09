@@ -1,5 +1,4 @@
 import copy
-import datetime
 from socket import AddressFamily
 
 import psutil

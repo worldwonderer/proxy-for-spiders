@@ -104,6 +104,7 @@ class PatternManager(object):
         self._redis_addr = redis_addr
         self.checker = checker
         self.saver = saver
+        self._patterns = list()
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
@@ -161,11 +162,12 @@ class PatternManager(object):
 
     async def add(self, pattern, check_rule):
         self.t[str(pattern)] = json.dumps(check_rule)
-        pattern = Pattern(str(pattern), check_rule, self.checker, self.saver)
+        self._patterns = await self.patterns()
         await self.redis.hset(self.key, str(pattern), json.dumps(check_rule))
 
     async def delete(self, pattern):
         del self.t[str(pattern)]
+        self._patterns = await self.patterns()
         await self.redis.hdel(self.key, str(pattern))
 
     async def update(self, pattern, check_rule):

@@ -1,10 +1,11 @@
 # proxy_tower
 
-爬虫代理模块，可以更高效率的使用代理池
+爬虫负载均衡模块，可以更高效率的使用代理池
 
 可解决：
 1. 开源代理池项目低可用率的痛点
 2. 付费代理过期时间不稳定，无法充分利用
+3. 一直使用失效的代理
 
 ## 特性
 * 增倍转发，将收到的请求转发给多个proxy，返回最快并且符合校验规则的response
@@ -90,3 +91,11 @@ class ProxyApi(ProxySource):
 由于每个proxy源获取到的proxy特性不同，可以使用tag给proxy做标记，并初始化属性
 * valid_time：proxy有效时长
 * support_https：proxy是否支持https
+
+## Dashboard
+
+[proxy_tower_dashboard](https://github.com/worldwonderer/proxy_tower_dashboard)
+
+* 查看proxy
+* 查看、修改、添加pattern
+* 各pattern成功率的折线表
