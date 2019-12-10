@@ -1,0 +1,11 @@
+version: '2'
+services:
+  proxy_tower:
+    build: .
+    ports:
+      - "8893:8893"
+    links:
+      - redis
+  redis:
+    image: "redis:latest"
+    command: ["redis-server", "--bind", "redis", "--port", "6379"]

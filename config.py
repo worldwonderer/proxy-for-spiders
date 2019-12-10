@@ -3,7 +3,8 @@ class Config(object):
         'antispider',
         'forbidden'
     ]
-    redis_addr = 'redis://localhost'
+    redis_addr = 'redis://redis:6379'
 
 
 conf = Config()
+
