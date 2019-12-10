@@ -1,10 +1,9 @@
 import json
 
-from models.pattern import Pattern
 from core.crawler import crawl
 
 
-async def forward(method, url, pam, pom, checker, saver, **kwargs):
+async def forward(method, url, pam, pom, **kwargs):
     headers = kwargs.get('headers')
     content = kwargs.get('content')
     style = kwargs.get('style', 'score')

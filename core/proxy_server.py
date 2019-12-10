@@ -80,13 +80,11 @@ class ProxyServer(web.Application):
     async def forward_request(self, request):
         pam = request.app['pam']
         pom = request.app['pom']
-        ck = request.app['ck']
-        sv = request.app['sv']
 
         body = await request.content.read()
         logger.info('received request {} from {}'.format(request.url, request.remote))
 
-        r = await forward(request.method, str(request.url), pam, pom, ck, sv, headers=request.headers, body=body)
+        r = await forward(request.method, str(request.url), pam, pom, headers=request.headers, body=body)
 
         if r is None:
             return web.Response(status=417, text='unable to get any response')
@@ -128,7 +126,6 @@ class ProxyServer(web.Application):
 
     async def login(self, request):
         # to be implemented
-        d = await request.json()
         return web.json_response(data={'code': 20000, 'data': 'admin'})
 
     async def logout(self, request):
