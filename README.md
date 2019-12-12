@@ -42,7 +42,7 @@ redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
 ```shell
 docker pull worldwonderer/proxy_pool
 
-docker run redis_host=<redis-ip> --env redis_port=6379 --env redis_password=pwd_str -p 8893:8893 worldwonderer/proxy_pool
+docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_pool
 ```
 
 ## 校验规则配置

@@ -41,7 +41,7 @@ class Checker(object):
         if rule == 'whitelist':
             if value not in text:
                 return 'whitelist check failed, {} not found'.format(value)
-        elif len(rule.strip()) != 0 and len(value.strip()) != 0:
+        elif rule and value and len(rule.strip()) != 0 and len(value.strip()) != 0:
             return self._xpath_checker(text, rule, value)
 
 
@@ -120,6 +120,7 @@ class PatternManager(object):
             await self.redis.wait_closed()
 
     async def patterns(self, format_type='raw'):
+        await self.redis.hset(self.key, 'public_proxies', json.dumps({'rule': None, 'value': None}))
         d = await self.redis.hgetall(self.key)
         patterns = [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']}
                     for p, v in d.items()]

@@ -24,10 +24,10 @@ async def _crawl(method, url, session, **kwargs):
             r.__class__ = Response
     except asyncio.CancelledError:
         r = FailedResponse()
-        r.traceback = [str(proxy)+'\n' + 'cancelled'+'\n']
+        r.traceback = ['\n'+str(proxy)+'\n' + 'cancelled'+'\n']
     except Exception as e:
         r = FailedResponse()
-        r.traceback = [str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
+        r.traceback = ['\n'+str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
         logger.warning(e, exc_info=True)
     return r
 
@@ -60,7 +60,7 @@ async def crawl(method, url, proxies=None, **kwargs):
 
     result = FailedResponse()
     r = None
-    need_check = all((any(proxies), pattern))
+    need_check = any(proxies)
     try:
         if need_check:
             tasks = [asyncio.ensure_future(_crawl_with_check(method, url, session, pattern,
