@@ -100,15 +100,16 @@ class Pattern(object):
 
 class PatternManager(object):
 
-    def __init__(self, checker, saver, redis_addr='redis://localhost'):
+    def __init__(self, checker, saver, redis_addr='redis://localhost', password=None):
         self._redis_addr = redis_addr
+        self._password = password
         self.checker = checker
         self.saver = saver
         self._patterns = list()
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr, encoding='utf8')
+        self.redis = await aioredis.create_redis_pool(self._redis_addr, password=None, encoding='utf8')
         self.t = await self._init_trie()
         self._patterns = await self.patterns()
         return self

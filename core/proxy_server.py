@@ -36,9 +36,12 @@ class ProxyServer(web.Application):
 
     async def core_session(self, app):
         checker = Checker(global_blacklist=self._config.global_blacklist)
-        saver = Saver(redis_addr=self._config.redis_addr)
-        proxy_manager = ProxyManager(redis_addr=self._config.redis_addr)
-        pattern_manager = PatternManager(checker, saver, redis_addr=self._config.redis_addr)
+        saver = Saver(redis_addr=self._config.redis_addr,
+                      password=self._config.redis_password)
+        proxy_manager = ProxyManager(redis_addr=self._config.redis_addr,
+                                     password=self._config.redis_password)
+        pattern_manager = PatternManager(checker, saver, redis_addr=self._config.redis_addr,
+                                         password=self._config.redis_password)
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()

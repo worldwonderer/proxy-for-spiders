@@ -80,12 +80,14 @@ class ProxyManager(object):
     ADD_NUM = 30
     _concurrent_semaphore = dict()
 
-    def __init__(self, redis_addr='redis://localhost', tags_source_map=None):
+    def __init__(self, redis_addr='redis://localhost', password=None, tags_source_map=None):
         self._redis_addr = redis_addr
+        self._password = password
         self.tags_source_map = tags_source_map or dict()
 
     async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr, encoding='utf8')
+        self.redis = await aioredis.create_redis_pool(self._redis_addr,
+                                                      password=self._password, encoding='utf8')
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
