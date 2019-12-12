@@ -109,7 +109,7 @@ class PatternManager(object):
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr, password=None, encoding='utf8')
+        self.redis = await aioredis.create_redis_pool(self._redis_addr, password=self._password, encoding='utf8')
         self.t = await self._init_trie()
         self._patterns = await self.patterns()
         return self

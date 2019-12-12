@@ -19,18 +19,30 @@
 * 测试地址：
 
 ## 使用方法
-1. 下载源码
-2. 安装依赖 `pip install -r requirements.txt`
-3. 启动 `python proxy_entrance.py`
-4. 测试 `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
+1. 安装依赖 `pip install -r requirements.txt`
+2. 启动 `python proxy_entrance.py`
+3. 测试 `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
 
 ## 配置 config.py
 ```shell
-redis_addr = 'redis://localhost'  # 本项目重度依赖redis，用于存储校验规则和代理
 global_blacklist = [
     'antispider',
     'forbidden'
 ]  # 全局黑名单关键词列表，如果response中包含列表中的关键词，判定response无效
+
+# 本项目重度依赖redis，用于存储校验规则和代理
+redis_host = getenv('redis_host', 'redis')
+redis_port = getenv('redis_port', 6379)
+redis_db = getenv('redis_db', 0)
+redis_password = getenv('redis_password', '')
+redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
+```
+
+## Docker
+```shell
+docker pull worldwonderer/proxy_pool
+
+docker run redis_host=<redis-ip> --env redis_port=6379 --env redis_password=pwd_str -p 8893:8893 worldwonderer/proxy_pool
 ```
 
 ## 校验规则配置
@@ -99,3 +111,9 @@ class ProxyApi(ProxySource):
 * 查看proxy
 * 查看、修改、添加pattern
 * 各pattern成功率的折线表
+
+## Todo
+
+* Docker
+* Test
+* 校验规则使用条件表达式
