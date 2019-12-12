@@ -105,13 +105,14 @@ class PatternManager(object):
         self._password = password
         self.checker = checker
         self.saver = saver
-        self._patterns = list()
+        self._patterns = dict()
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
         self.redis = await aioredis.create_redis_pool(self._redis_addr, password=self._password, encoding='utf8')
         self.t = await self._init_trie()
-        self._patterns = await self.patterns()
+        self._patterns = {str(pattern): pattern for pattern in await self.patterns()}
+        await self.add('public_proxies', {'rule': None, 'value': None})
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -120,7 +121,6 @@ class PatternManager(object):
             await self.redis.wait_closed()
 
     async def patterns(self, format_type='raw'):
-        await self.redis.hset(self.key, 'public_proxies', json.dumps({'rule': None, 'value': None}))
         d = await self.redis.hgetall(self.key)
         patterns = [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']}
                     for p, v in d.items()]
@@ -133,13 +133,13 @@ class PatternManager(object):
         return patterns
 
     def get_pattern(self, pattern_str):
-        for pattern in self._patterns:
-            if str(pattern) == pattern_str:
-                return pattern
+        for p in self._patterns:
+            if p == pattern_str:
+                return self._patterns[p]
 
     def status(self):
         items = list()
-        patterns = self._patterns
+        patterns = self._patterns.values()
         now = datetime.datetime.now()
         x = [(now-datetime.timedelta(minutes=i)).strftime("%H:%M") for i in range(9, -1, -1)]
         for pattern in patterns:
@@ -164,12 +164,12 @@ class PatternManager(object):
 
     async def add(self, pattern, check_rule):
         self.t[str(pattern)] = json.dumps(check_rule)
-        self._patterns = await self.patterns()
+        self._patterns[str(pattern)] = Pattern(str(pattern), check_rule, self.checker, self.saver)
         await self.redis.hset(self.key, str(pattern), json.dumps(check_rule))
 
     async def delete(self, pattern):
         del self.t[str(pattern)]
-        self._patterns = await self.patterns()
+        del self._patterns[str(pattern)]
         await self.redis.hdel(self.key, str(pattern))
 
     async def update(self, pattern, check_rule):

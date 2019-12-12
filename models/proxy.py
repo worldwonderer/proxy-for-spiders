@@ -118,7 +118,11 @@ class ProxyManager(object):
                 if used and prefer_used:
                     score *= 1.5
                 return score
-            selected_proxies = random.sample(heapq.nlargest(n, proxies, key=lambda a: selector(a)), concurrent_num)
+            selected_proxies = random.sample(
+                heapq.nlargest(
+                    n, proxies, key=lambda a: selector(a)
+                ), concurrent_num
+            )
         return selected_proxies
 
     async def sync_public(self, pattern_str):
