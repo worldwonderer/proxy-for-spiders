@@ -26,7 +26,7 @@ class Checker(object):
             et = etree.HTML(html)
             assert et.xpath(xpath)[0] == value
         except IndexError:
-            return 'xpath check failed, {} not found'
+            return 'xpath check failed, {} not found'.format(xpath)
         except AssertionError:
             return 'xpath check failed, value not equal'
         except Exception:
