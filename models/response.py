@@ -4,7 +4,9 @@ from aiohttp import ClientResponse
 
 
 class FailedResponse(object):
-    traceback = list()
+
+    def __init__(self):
+        self.traceback = list()
 
 
 class Response(ClientResponse):
@@ -26,5 +28,6 @@ class Response(ClientResponse):
             'status_code': self.status,
             'valid': self.valid,
             'text': text,
-            'proxy': str(self.proxy)
+            'proxy': str(self.proxy),
+            'trackback': ''.join(self.traceback)
         })

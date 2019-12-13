@@ -17,12 +17,12 @@ class Proxy(object):
     def __init__(self, ip, port, **kwargs):
         self.ip = ip
         self.port = int(port)
-        self.valid_time = kwargs.get('valid_time')
+        self.valid_time = kwargs.get('valid_time', -1)
         self.insert_time = kwargs.get('insert_time') or int(time.time())
+        self.support_https = kwargs.get('support_https', False)
         self.tag = kwargs.get('tag')
         self._score = self.INIT_SCORE
         self.used = False
-        self.support_https = kwargs.get('support_https', False)
 
     @property
     def score(self):
@@ -32,7 +32,7 @@ class Proxy(object):
     def score(self, value):
         if value < -10:
             warnings.warn("proxy's score is lower than -10, consider abandon it")
-        if value >= 10:
+        if value > 5:
             return
         self._score = value
 

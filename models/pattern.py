@@ -30,7 +30,7 @@ class Checker(object):
         except AssertionError:
             return 'xpath check failed, value not equal'
         except Exception:
-            return traceback.format_exception(*sys.exc_info())
+            return ''.join(traceback.format_exception(*sys.exc_info()))
 
     def check(self, status_code, text, rule, value):
         if not self._status_code_checker(status_code):
@@ -47,11 +47,12 @@ class Checker(object):
 
 class Pattern(object):
 
-    def __init__(self, pattern_str, check_rule, checker, saver=None):
+    def __init__(self, pattern_str, rule, value, checker, saver=None):
         self._pattern_str = pattern_str
         self.checker = checker
         self.saver = saver
-        self.check_rule = check_rule
+        self.rule = rule
+        self.value = value
         self.counter_lock = asyncio.Lock()
         self.success_counter = OrderedDict()
         self.fail_counter = OrderedDict()
@@ -72,13 +73,13 @@ class Pattern(object):
         return [x, y]
 
     async def check(self, response):
-        rule, value = self.check_rule['rule'], self.check_rule['value']
+        rule, value = self.rule, self.value
         text = await response.text()
         result = self.checker.check(response.status, text, rule, value)
-        tb = list()
-        if isinstance(result, str):
-            tb = [result]
-        return tb
+        if result is None:
+            return list()
+        else:
+            return [result]
 
     async def counter(self, now, valid):
         async with self.counter_lock:
@@ -97,6 +98,16 @@ class Pattern(object):
             return
         await self.saver.save_result(str(self), str(proxy), response)
 
+    def to_dict(self):
+        return {
+            'pattern': self._pattern_str,
+            'rule': self.rule,
+            'value': self.value
+        }
+
+    def dumps(self):
+        return json.dumps(self.to_dict())
+
 
 class PatternManager(object):
 
@@ -112,7 +123,7 @@ class PatternManager(object):
         self.redis = await aioredis.create_redis_pool(self._redis_addr, password=self._password, encoding='utf8')
         self.t = await self._init_trie()
         self._patterns = {str(pattern): pattern for pattern in await self.patterns()}
-        await self.add('public_proxies', {'rule': None, 'value': None})
+        await self.add('public_proxies', None, None)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -122,26 +133,25 @@ class PatternManager(object):
 
     async def patterns(self, format_type='raw'):
         d = await self.redis.hgetall(self.key)
-        patterns = [{'pattern': p, 'rule': json.loads(v)['rule'], 'value': json.loads(v)['value']}
-                    for p, v in d.items()]
+        patterns = [json.loads(v) for v in d.values()]
         if format_type == 'raw':
             patterns = [Pattern(pattern['pattern'],
-                                {'rule': pattern['rule'], 'value': pattern['value']},
+                                pattern['rule'],
+                                pattern['value'],
                                 self.checker,
                                 self.saver
                                 ) for pattern in patterns]
         return patterns
 
     def get_pattern(self, pattern_str):
-        for p in self._patterns:
-            if p == pattern_str:
-                return self._patterns[p]
+        if pattern_str in self._patterns:
+            return self._patterns[pattern_str]
 
     def status(self):
         items = list()
-        patterns = self._patterns.values()
         now = datetime.datetime.now()
         x = [(now-datetime.timedelta(minutes=i)).strftime("%H:%M") for i in range(9, -1, -1)]
+        patterns = self._patterns.values()
         for pattern in patterns:
             times, values = pattern.success_rate
             y = [0] * 10
@@ -162,18 +172,19 @@ class PatternManager(object):
     async def restore_trie(self, t):
         await self.redis.hmset(self.key, t)
 
-    async def add(self, pattern, check_rule):
-        self.t[str(pattern)] = json.dumps(check_rule)
-        self._patterns[str(pattern)] = Pattern(str(pattern), check_rule, self.checker, self.saver)
-        await self.redis.hset(self.key, str(pattern), json.dumps(check_rule))
+    async def add(self, pattern, rule, value):
+        p = Pattern(str(pattern), rule, value, self.checker, self.saver)
+        self._patterns[str(pattern)] = p
+        self.t[str(pattern)] = p.dumps()
+        await self.redis.hset(self.key, str(pattern), p.dumps())
 
     async def delete(self, pattern):
         del self.t[str(pattern)]
         del self._patterns[str(pattern)]
         await self.redis.hdel(self.key, str(pattern))
 
-    async def update(self, pattern, check_rule):
-        await self.add(pattern, check_rule)
+    async def update(self, pattern, rule, value):
+        await self.add(pattern, rule, value)
 
     async def get_cookies(self, pattern_str):
         return await self.redis.srandmember(pattern_str + '_cookies')
@@ -192,7 +203,7 @@ class CheckPatternTrie(CharTrie):
         step = self.longest_prefix(url)
         pattern_str, check_rule_json = step.key, step.value
         if pattern_str is None:
-            pattern_str, check_rule_json = 'public_proxies', json.dumps({'rule': '', 'value': ''})
+            pattern_str, check_rule_json = 'public_proxies', json.dumps({'rule': None, 'value': None})
         return pattern_str, check_rule_json
 
     @staticmethod

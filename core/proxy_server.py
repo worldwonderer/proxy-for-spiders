@@ -155,7 +155,7 @@ class ProxyServer(web.Application):
     async def pattern(self, request):
         d = await request.json()
         if request.method == 'POST':
-            await request.app['pam'].add(d['pattern'], {'rule': d['rule'], 'value': d['value']})
+            await request.app['pam'].add(d['pattern'], d['rule'],  d['value'])
         elif request.method == 'DELETE':
             await request.app['pam'].delete(d['pattern'])
         return web.json_response(data={'code': 20000, 'data': 'success'})

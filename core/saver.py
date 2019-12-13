@@ -48,7 +48,7 @@ class Saver(object):
 
             else:
                 existed_time = int(time.time()) - proxy.insert_time
-                if proxy.valid_time and existed_time > proxy.valid_time > 0:
+                if existed_time > proxy.valid_time > 0:
                     await self._del_proxy_in_pattern(pattern_str, proxy)
                 else:
                     proxy.score -= 1
