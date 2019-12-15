@@ -115,7 +115,7 @@ Proxies from different proxy source have their own properties, you can tag the p
 [proxy_tower_dashboard](https://github.com/worldwonderer/proxy_tower_dashboard)
 
 * Display all proxies and their info
-* View, modify, and add patterns
+* View, modify or add patterns
 * A Line chart of each pattern's success rate
 
 ## Todo
