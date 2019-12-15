@@ -16,8 +16,8 @@
  
 多倍转发可有效解决免费/不稳定代理使用率低的问题
 
-* 返回校验
-    * pattern是目标站点的某个复用页面，通常有同样的URL前缀，类似的HTML结构，如豆瓣电影movie.douban.com/subject/
+* response校验
+    * pattern是目标站点的某个复用页面，通常有同样的URL前缀，类似的HTML结构，如豆瓣电影`movie.douban.com/subject/`
     * 通过前缀树存储pattern和对应的xpath或keyword校验规则，高效、简便的解决了多站点校验的问题
     * 不同的pattern有其各自的代理池  
 

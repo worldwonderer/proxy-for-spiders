@@ -4,8 +4,10 @@ A proxy load balance server allows web crawlers to use proxy pool more effective
  [中文文档](https://github.com/worldwonderer/proxy_tower/blob/master/README_ZH.md)
 
 1. Free proxies usually have low success rate 
-2. Payment proxies's expiration time is unstable and difficult to make full use of
+2. Payment proxies's have uncertain expiration time and are difficult to make full use of
 3. Avoid using invalid proxies constantly 
+
+Note: proxy_tower itself does not seek proxies
 
 ## Features
 * Multiple forwarding
@@ -15,20 +17,18 @@ A proxy load balance server allows web crawlers to use proxy pool more effective
 Multiple forwarding can increase the success rate of using free or unstable proxies
 
 * Response verification
-    * Pattern is a reused page of the target site, the page has same URL prefix and similar HTML structure，such as 'movie.douban.com/subject/'
+    * Pattern is a reused page of the target site with same URL prefix and similar HTML structure，such as 'movie.douban.com/subject/'
     * Patterns and verification rules are stored in a prefix tree which helps verify responses from different sites easily and effectively
     * Separated proxy pools for different patterns
 
-Note: proxy_tower itself does not seek proxies
-
 ## Requirements
 * Python >= 3.6
-* A redis server
+* redis server
 
 ## Getting started
 1. `pip install -r requirements.txt`
 2. `python proxy_entrance.py`
-3. For test: `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
+3. `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
 
 ## config.py
 ```shell
@@ -53,7 +53,7 @@ docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<f
 ```
 
 ## Response Verification
-Currently support two kinds of verification rules
+Currently support 2 kinds of verification rules
 1. whitelist, if the response contains specified keywords, response is determined to be valid
 2. xpath, if xpath can extract specified value from response, response is determined to be valid
 
@@ -69,11 +69,11 @@ r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule'
 r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
 ```
 
-After configuring the validation rule for a pattern，when you crawl web pages like 'https://movie.douban.com/subject/27119724/' ，proxy_tower will verify the content of response and score the proxy
+After configuring the verification rule for the pattern `movie.douban.com/subject/`，when you crawl web pages like `https://movie.douban.com/subject/27119724/`，proxy_tower will verify the content of response and score the proxy
 
 ## Adding proxies
 
-You can add proxy source in models/proxy.py through reading file or requesting API
+You can add proxy source in models/proxy.py through file or API
 
 ```
 # file
@@ -106,7 +106,7 @@ class ProxyApi(ProxySource):
             yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time)
 ```
 
-Proxies from different proxy source have their own properties, you can tag the proxy and initialize them at the very beginning
+Proxies from different proxy source have their own properties, you can tag the proxy and initialize properties at the very beginning
 * valid_time
 * support_https
 
