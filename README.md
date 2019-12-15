@@ -1,7 +1,7 @@
 # proxy_tower
 A proxy load balance server allows web crawlers to use proxy pool more effectively
 
- [中文文档](https://raw.githubusercontent.com/worldwonderer/proxy_tower/master/README_ZH.md)
+ [中文文档](https://github.com/worldwonderer/proxy_tower/blob/master/README_ZH.md)
 
 1. Free proxies usually have low success rate 
 2. Payment proxies's expiration time is unstable and difficult to make full use of
