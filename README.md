@@ -17,7 +17,7 @@ Note: proxy_tower itself does not seek proxies
 Multiple forwarding can increase the success rate of using free or unstable proxies
 
 * Response verification
-    * Pattern is a reused page of the target site with same URL prefix and similar HTML structure，such as 'movie.douban.com/subject/'
+    * Pattern is a reused page of the target site with same URL prefix and similar HTML structure，such as `movie.douban.com/subject/` for `https://movie.douban.com/subject/6981153/`
     * Patterns and verification rules are stored in a prefix tree which helps verify responses from different sites easily and effectively
     * Separated proxy pools for different patterns
 
@@ -54,8 +54,8 @@ docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<f
 
 ## Response Verification
 Currently support 2 kinds of verification rules
-1. whitelist, if the response contains specified keywords, response is determined to be valid
-2. xpath, if xpath can extract specified value from response, response is determined to be valid
+1. `whitelist` If the response contains specified keywords, response is determined to be valid
+2. `xpath` If xpath can extract specified value from response, response is determined to be valid
 
 ```shell
 import json
@@ -73,7 +73,7 @@ After configuring the verification rule for the pattern `movie.douban.com/subjec
 
 ## Adding proxies
 
-You can add proxy source in models/proxy.py through file or API
+You can add proxy source in `models/proxy.py` through file or API
 
 ```
 # file
@@ -107,6 +107,7 @@ class ProxyApi(ProxySource):
 ```
 
 Proxies from different proxy source have their own properties, you can tag the proxy and initialize properties at the very beginning
+
 * valid_time
 * support_https
 

@@ -54,8 +54,8 @@ docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<f
 
 ## 校验规则配置
 目前支持两种校验规则的配置
-1. whitelist，即如果response中包含了这些关键词，判定response有效
-2. xpath，即如果response中能用该xpath解析到对应的内容，判定response有效
+1. `whitelist`，即如果response中包含了这些关键词，判定response有效
+2. `xpath`，即如果response中能用该xpath解析到对应的内容，判定response有效
 
 ```shell
 import json
@@ -69,7 +69,7 @@ r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule'
 r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
 ```
 
-配置校验规则后，代理https://movie.douban.com/subject/27119724/ 类似的页面，proxy_tower会对页面内容做校验，优先返回符合规则的response，并对proxy计分
+配置校验规则后，代理`https://movie.douban.com/subject/27119724/`类似的页面，proxy_tower会对页面内容做校验，优先返回符合规则的response，并对proxy计分
 
 ## 代理接入
 
