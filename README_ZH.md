@@ -109,6 +109,12 @@ class ProxyApi(ProxySource):
 * valid_time：proxy有效时长
 * support_https：proxy是否支持https
 
+## HTTPS
+
+对于必须使用https的站点，可以在请求的headers中添加`'Need-Https': 'yes'`，proxy_tower会选取带有support_https标记的proxy
+
+注：proxy_tower的URL不要带上https，例如使用`http://0.0.0.0:8893`，而不是`https://0.0.0.0:8893`
+
 ## Dashboard
 
 [proxy_tower_dashboard](https://github.com/worldwonderer/proxy_tower_dashboard)

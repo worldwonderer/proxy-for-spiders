@@ -1,5 +1,7 @@
 # proxy_tower
-A proxy load balance server allows web crawlers to use proxy pool more effectively [中文文档](https://github.com/worldwonderer/proxy_tower/blob/master/README_ZH.md)
+A proxy load balance server allows web crawlers to use proxy pool more effectively
+ 
+ [中文文档](https://github.com/worldwonderer/proxy_tower/blob/master/README_ZH.md)
 
 trying to solve:
 1. Free proxies usually have low success rate 
@@ -117,6 +119,12 @@ Proxies from different proxy source have their own properties, you can tag the p
 * Display all proxies and their info
 * View, modify or add patterns
 * A Line chart of each pattern's success rate
+
+## HTTPS
+
+For https must sites，put `'Need-Https': 'yes'` in headers，proxy_tower will pick proxies with support_https tag
+
+Note：do not add https in proxy_tower URL, e.g. use `http://0.0.0.0:8893` instead of `https://0.0.0.0:8893`
 
 ## Todo
 
