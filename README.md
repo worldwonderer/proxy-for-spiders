@@ -124,7 +124,7 @@ Proxies from different proxy source have their own properties, you can tag the p
 
 For https must sites，put `'Need-Https': 'yes'` in headers，proxy_tower will pick proxies with support_https tag
 
-Note：do not add https in proxy_tower URL, e.g. use `http://0.0.0.0:8893` instead of `https://0.0.0.0:8893`
+Note：do not add https in URL, e.g. use `http://www.bilibili.com` instead of `https://www.bilibili.com`
 
 ## Todo
 

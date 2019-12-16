@@ -74,6 +74,7 @@ r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule'
 ## 代理接入
 
 可以在models/proxy.py中拓展proxy源，目前支持文件和API两种方式
+
 ```shell
 # 文件
 class ProxyFile(ProxySource):
@@ -113,7 +114,7 @@ class ProxyApi(ProxySource):
 
 对于必须使用https的站点，可以在请求的headers中添加`'Need-Https': 'yes'`，proxy_tower会选取带有support_https标记的proxy
 
-注：proxy_tower的URL不要带上https，例如使用`http://0.0.0.0:8893`，而不是`https://0.0.0.0:8893`
+注：URL不要带上https，例如使用`http://www.bilibili.com`，而不是`http://www.bilibili.com`
 
 ## Dashboard
 
