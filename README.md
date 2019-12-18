@@ -77,7 +77,7 @@ After configuring the verification rule for the pattern `movie.douban.com/subjec
 You can add proxy source in `models/proxy.py` through file or API
 
 ```
-# file
+# 文件
 class ProxyFile(ProxySource):
 
     def __init__(self, tag, file_path):
@@ -88,7 +88,7 @@ class ProxyFile(ProxySource):
         with open(self.file_path, 'r') as f:
             proxy_candidates = re.findall(self.proxy_pattern, f.read())
             for proxy in proxy_candidates:
-                yield Proxy.parse(proxy, tag=self.tag, support_https=True)
+                yield Proxy.parse(proxy, tag=self.tag, support_https=True, paid=False)
 
 
 # API
@@ -104,13 +104,14 @@ class ProxyApi(ProxySource):
         text = await r.text()
         proxy_candidates = re.findall(self.proxy_pattern, text)
         for proxy in proxy_candidates:
-            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time)
+            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time, paid=False)
 ```
 
 Proxies from different proxy source have their own properties, you can tag the proxy and initialize properties at the very beginning
 
 * valid_time
 * support_https
+* paid
 
 ## Dashboard
 
