@@ -76,7 +76,7 @@ class Proxy(object):
 
 class ProxyManager(object):
 
-    REQUEST_CONCURRENT = 3
+    REQUEST_CONCURRENT = 10
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 100
@@ -109,12 +109,13 @@ class ProxyManager(object):
 
     async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, style='score'):
         proxies = await self.proxies(need_https, pattern_str)
-        concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
         if style == 'shuffle':
+            concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
             selected_proxies = random.sample(proxies, concurrent_num)
         else:
             scope = self.SCORE_RANDOM_SCOPE
             n = min(scope, len(proxies))
+            concurrent_num = min(n, self.REQUEST_CONCURRENT)
 
             def selector(proxy):
                 score, used = proxy.score, proxy.used

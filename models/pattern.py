@@ -66,7 +66,7 @@ class Pattern(object):
         y = list()
         for t in self.success_counter:
             if t in self.fail_counter:
-                y.append(self.success_counter[t]/self.fail_counter[t] + self.success_counter[t])
+                y.append((self.success_counter[t]/(self.fail_counter[t] + self.success_counter[t])) * 100)
             else:
                 y.append(100)
             x.append(t)
