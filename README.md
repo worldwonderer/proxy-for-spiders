@@ -77,7 +77,7 @@ After configuring the verification rule for the pattern `movie.douban.com/subjec
 You can add proxy source in `models/proxy.py` through file or API
 
 ```
-# 文件
+# File
 class ProxyFile(ProxySource):
 
     def __init__(self, tag, file_path):
