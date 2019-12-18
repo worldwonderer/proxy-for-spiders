@@ -87,7 +87,7 @@ class ProxyFile(ProxySource):
         with open(self.file_path, 'r') as f:
             proxy_candidates = re.findall(self.proxy_pattern, f.read())
             for proxy in proxy_candidates:
-                yield Proxy.parse(proxy, tag=self.tag, support_https=True)
+                yield Proxy.parse(proxy, tag=self.tag, support_https=True, paid=False)
 
 
 # API
@@ -103,12 +103,13 @@ class ProxyApi(ProxySource):
         text = await r.text()
         proxy_candidates = re.findall(self.proxy_pattern, text)
         for proxy in proxy_candidates:
-            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time)
+            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time, paid=False)
 ```
 
 由于每个proxy源获取到的proxy特性不同，可以使用tag给proxy做标记，并初始化属性
 * valid_time：proxy有效时长
 * support_https：proxy是否支持https
+* paid: proxy是否为付费代理
 
 ## HTTPS
 

@@ -20,6 +20,7 @@ class Proxy(object):
         self.valid_time = kwargs.get('valid_time', -1)
         self.insert_time = kwargs.get('insert_time') or int(time.time())
         self.support_https = kwargs.get('support_https', False)
+        self.paid = kwargs.get('paid')
         self.tag = kwargs.get('tag')
         self._score = self.INIT_SCORE
         self.used = False
@@ -48,6 +49,7 @@ class Proxy(object):
             "valid_time": self.valid_time,
             "insert_time": self.insert_time,
             "tag": self.tag,
+            "paid": self.paid,
             "support_https": self.support_https
         }
 
@@ -58,7 +60,8 @@ class Proxy(object):
     def loads(cls, j):
         d = json.loads(j)
         proxy = Proxy(d['ip'], d['port'], valid_time=d.get('valid_time'),
-                      insert_time=d['insert_time'], tag=d.get('tag'), support_https=d.get('support_https', False))
+                      insert_time=d['insert_time'], tag=d.get('tag'),
+                      support_https=d.get('support_https', False), paid=d.get('paid'))
         proxy.score = d['score']
         proxy.used = d['used']
         return proxy
@@ -73,7 +76,7 @@ class Proxy(object):
 
 class ProxyManager(object):
 
-    REQUEST_CONCURRENT = 3
+    REQUEST_CONCURRENT = 10
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 100
@@ -104,14 +107,15 @@ class ProxyManager(object):
             proxies = [p.to_dict() for p in proxies]
         return proxies
 
-    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, style='score'):
+    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, style='score'):
         proxies = await self.proxies(need_https, pattern_str)
-        concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
         if style == 'shuffle':
+            concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
             selected_proxies = random.sample(proxies, concurrent_num)
         else:
             scope = self.SCORE_RANDOM_SCOPE
             n = min(scope, len(proxies))
+            concurrent_num = min(n, self.REQUEST_CONCURRENT)
 
             def selector(proxy):
                 score, used = proxy.score, proxy.used
@@ -123,6 +127,17 @@ class ProxyManager(object):
                     n, proxies, key=lambda a: selector(a)
                 ), concurrent_num
             )
+        if economic:
+            # put only one paid proxy in selected_proxies to avoid wasting
+            already_put_one = False
+            temp = list()
+            for p in selected_proxies:
+                if p.paid and already_put_one:
+                    continue
+                if p.paid and not already_put_one:
+                    already_put_one = True
+                temp.append(p)
+            selected_proxies = temp
         return selected_proxies
 
     async def sync_public(self, pattern_str):
@@ -179,12 +194,13 @@ class ProxyFile(ProxySource):
     def __init__(self, tag, file_path):
         self.file_path = file_path
         self.tag = tag
+        self.paid = False
 
     async def fetch_proxies(self):
         with open(self.file_path, 'r') as f:
             proxy_candidates = re.findall(self.proxy_pattern, f.read())
             for proxy in proxy_candidates:
-                yield Proxy.parse(proxy, tag=self.tag, support_https=True)
+                yield Proxy.parse(proxy, tag=self.tag, support_https=True, paid=False)
 
 
 class ProxyApi(ProxySource):
@@ -199,7 +215,7 @@ class ProxyApi(ProxySource):
         text = await r.text()
         proxy_candidates = re.findall(self.proxy_pattern, text)
         for proxy in proxy_candidates:
-            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time)
+            yield Proxy.parse(proxy, tag=self.tag, valid_time=self.valid_time, paid=False)
 
 
 proxy_sources = {
