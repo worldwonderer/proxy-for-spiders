@@ -115,7 +115,7 @@ class ProxyApi(ProxySource):
 
 对于必须使用https的站点，可以在请求的headers中添加`'Need-Https': 'yes'`，proxy_tower会选取带有support_https标记的proxy
 
-注：URL不要带上https，例如使用`http://www.bilibili.com`，而不是`http://www.bilibili.com`
+注：URL不要带上https，例如使用`http://www.bilibili.com`，而不是`https://www.bilibili.com`
 
 ## Dashboard
 
