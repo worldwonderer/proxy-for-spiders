@@ -2,6 +2,9 @@ version: '2'
 services:
   proxy_tower:
     build: .
+    image: "worldwonderer/proxy_tower"
+    environment:
+      - redis_host=redis
     ports:
       - "8893:8893"
     links:

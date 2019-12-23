@@ -49,7 +49,12 @@ redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
 ```shell
 docker pull worldwonderer/proxy_tower
 
+# 已有redis服务
 docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_tower
+
+# 无redis服务，启用redis container
+cd proxy_tower/
+docker-compose up
 ```
 
 ## 校验规则配置
