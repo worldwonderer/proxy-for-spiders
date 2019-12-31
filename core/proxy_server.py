@@ -90,12 +90,15 @@ class ProxyServer(web.Application):
         r = await forward(request.method, str(request.url), pam, pom, headers=request.headers, body=body)
 
         if r is None:
+            logger.warning("unable to get any valid response for {}".format(request.url))
             return web.Response(status=417, text='unable to get any response')
         elif r.traceback:
             tb = ''.join(r.traceback)
+            logger.warning("unable to get any valid response for {}".format(request.url))
             return web.Response(status=417, text=tb)
         else:
             text = await r.text()
+            logger.info("get valid response for {} via proxy {}".format(request.url, r.proxy))
             return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
 
     async def dashboard(self, request):

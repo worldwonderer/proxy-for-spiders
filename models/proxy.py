@@ -7,6 +7,7 @@ import random
 import aioredis
 
 from core.crawler import crawl
+from config import conf
 
 
 class Proxy(object):
@@ -86,7 +87,7 @@ class Proxy(object):
 
 class ProxyManager(object):
 
-    REQUEST_CONCURRENT = 10
+    REQUEST_CONCURRENT = conf.request_concurrent
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 100

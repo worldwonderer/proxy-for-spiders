@@ -6,6 +6,7 @@ import traceback
 import aiohttp
 
 import log_utils
+from config import conf
 from models.response import Response, FailedResponse
 
 
@@ -16,7 +17,7 @@ async def _crawl(method, url, session, **kwargs):
     proxy = kwargs.get('proxy')
     if proxy is not None:
         kwargs['proxy'] = str(proxy)
-    kwargs.update({'ssl': False, 'timeout': 10})
+    kwargs.update({'ssl': False, 'timeout': conf.timeout})
     try:
         async with session.request(method, url, **kwargs) as r:
             r.proxy = proxy
@@ -25,10 +26,9 @@ async def _crawl(method, url, session, **kwargs):
     except asyncio.CancelledError:
         r = FailedResponse()
         r.traceback = ['\n'+str(proxy)+'\n' + 'cancelled'+'\n']
-    except Exception as e:
+    except Exception:
         r = FailedResponse()
         r.traceback = ['\n'+str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
-        logger.warning(e, exc_info=True)
     return r
 
 
