@@ -29,5 +29,5 @@ class Response(ClientResponse):
             'valid': self.valid,
             'text': text,
             'proxy': str(self.proxy),
-            'trackback': ''.join(self.traceback)
+            'traceback': ''.join(self.traceback)
         })
