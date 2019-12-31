@@ -108,6 +108,9 @@ class Pattern(object):
     def dumps(self):
         return json.dumps(self.to_dict())
 
+    async def store(self, key, redis):
+        await redis.hset(key, str(self), self.dumps())
+
 
 class PatternManager(object):
 
@@ -176,7 +179,7 @@ class PatternManager(object):
         p = Pattern(str(pattern), rule, value, self.checker, self.saver)
         self._patterns[str(pattern)] = p
         self.t[str(pattern)] = p.dumps()
-        await self.redis.hset(self.key, str(pattern), p.dumps())
+        await p.store(self.key, self.redis)
 
     async def delete(self, pattern):
         del self.t[str(pattern)]

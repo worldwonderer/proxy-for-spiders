@@ -1,5 +1,6 @@
 import time
 import asyncio
+from collections import defaultdict
 
 import aioredis
 
@@ -8,7 +9,7 @@ from models.proxy import Proxy
 
 class Saver(object):
 
-    pattern_lock_map = dict()
+    pattern_lock_map = defaultdict(asyncio.Lock)
     RESULT_SAVE_NUM = 100
 
     def __init__(self, redis_addr='redis://localhost', password=None):
@@ -33,19 +34,13 @@ class Saver(object):
                                  self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM-1)])
 
     async def _score_counter(self, pattern_str, proxy_str, valid):
-        if pattern_str not in self.pattern_lock_map:
-            self.pattern_lock_map[pattern_str] = asyncio.Lock()
         async with self.pattern_lock_map[pattern_str]:
-            proxy_json = await self.redis.hget(pattern_str, proxy_str)
-            if proxy_json is None:
-                return
-            proxy = Proxy.loads(proxy_json)
+            proxy = await Proxy.discard(pattern_str, proxy_str, self.redis)
             if valid:
                 if proxy.score < 0:
                     proxy.score = 0
                 elif 0 <= proxy.score < 5:
                     proxy.score += 1
-
             else:
                 existed_time = int(time.time()) - proxy.insert_time
                 if existed_time > proxy.valid_time > 0:
@@ -54,7 +49,7 @@ class Saver(object):
                     proxy.score -= 1
 
             proxy.used = True
-            await self.redis.hset(pattern_str, proxy_str, proxy.dumps())
+            await proxy.store(pattern_str, self.redis)
 
     async def save_result(self, pattern_str, proxy_str, response):
         tasks = [
@@ -71,4 +66,4 @@ class Saver(object):
             await self.redis.hdel(pattern_str, str(proxy))
             if proxy.used:
                 proxy.delete_time = int(time.time())
-                await self.redis.hset(fail_key, proxy, proxy.dumps())
+                await proxy.store(fail_key, self.redis)

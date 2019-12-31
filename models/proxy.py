@@ -3,7 +3,6 @@ import json
 import time
 import heapq
 import random
-import warnings
 
 import aioredis
 
@@ -31,8 +30,6 @@ class Proxy(object):
 
     @score.setter
     def score(self, value):
-        if value < -10:
-            warnings.warn("proxy's score is lower than -10, consider abandon it")
         if value > 5:
             return
         self._score = value
@@ -41,7 +38,7 @@ class Proxy(object):
         return json.dumps(self.to_dict())
 
     def to_dict(self):
-        return {
+        d = {
             "score": self.score,
             "ip": self.ip,
             "port": self.port,
@@ -52,9 +49,22 @@ class Proxy(object):
             "paid": self.paid,
             "support_https": self.support_https
         }
+        if hasattr(self, 'delete_time'):
+            d['delete_time'] = self.delete_time
+        return d
 
     def __str__(self):
         return 'http://{0}:{1}'.format(self.ip, self.port)
+
+    async def store(self, pattern_str, redis):
+        await redis.hset(str(pattern_str), str(self), self.dumps())
+
+    @classmethod
+    async def discard(cls, pattern_str, proxy_str, redis):
+        j = await redis.hget(str(pattern_str), str(proxy_str))
+        if j is None:
+            return None
+        return cls.loads(j)
 
     @classmethod
     def loads(cls, j):
@@ -160,7 +170,7 @@ class ProxyManager(object):
 
     async def _add_proxy(self, proxy, pattern_str):
         for p in {pattern_str, 'public_proxies'}:
-            del_info_json = await self.redis.hget(p + '_fail', str(proxy))
+            del_info_json = await self.redis.hget(p+'_fail', str(proxy))
             if del_info_json is not None:
                 del_info = json.load(del_info_json)
                 del_time = del_info['delete_time']
@@ -170,7 +180,7 @@ class ProxyManager(object):
                     await self.redis.hdel(p + '_fail', str(proxy))
             if await self.redis.hexists(pattern_str, str(proxy)):
                 return False
-            await self.redis.hset(p, str(proxy), proxy.dumps())
+            await proxy.store(p, self.redis)
         return True
 
     async def add_proxies_for_pattern(self, pattern_str):

@@ -30,7 +30,8 @@ class LogHandler(logging.Logger):
 
     def _set_file_handler(self, level=None):
         file_name = os.path.join(LOG_PATH, '{name}.log'.format(name=self.name))
-        file_handler = logging.handlers.TimedRotatingFileHandler(filename=file_name, when='D', interval=1, backupCount=15)
+        file_handler = logging.handlers.TimedRotatingFileHandler(filename=file_name, when='D',
+                                                                 interval=1, backupCount=15)
         file_handler.suffix = '%Y%m%d.log'
         if not level:
             file_handler.setLevel(self.level)
