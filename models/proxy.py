@@ -6,12 +6,16 @@ import random
 
 import aioredis
 
+import log_utils
 from core.crawler import crawl
+
+
+logger = log_utils.LogHandler(__name__, file=True)
 
 
 class Proxy(object):
 
-    INIT_SCORE = 0
+    _score = 0
 
     def __init__(self, ip, port, **kwargs):
         self.ip = ip
@@ -21,7 +25,7 @@ class Proxy(object):
         self.support_https = kwargs.get('support_https', False)
         self.paid = kwargs.get('paid')
         self.tag = kwargs.get('tag')
-        self._score = self.INIT_SCORE
+
         self.used = False
 
     @property
@@ -86,17 +90,17 @@ class Proxy(object):
 
 class ProxyManager(object):
 
-    REQUEST_CONCURRENT = 10
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 100
     ADD_NUM = 30
     _concurrent_semaphore = dict()
 
-    def __init__(self, redis_addr='redis://localhost', password=None, tags_source_map=None):
+    def __init__(self, request_concurrent, redis_addr='redis://localhost', password=None, tags_source_map=None):
         self._redis_addr = redis_addr
         self._password = password
         self.tags_source_map = tags_source_map or dict()
+        self.request_concurrent = request_concurrent
 
     async def __aenter__(self):
         self.redis = await aioredis.create_redis_pool(self._redis_addr,
@@ -120,12 +124,12 @@ class ProxyManager(object):
     async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, style='score'):
         proxies = await self.proxies(need_https, pattern_str)
         if style == 'shuffle':
-            concurrent_num = min(len(proxies), self.REQUEST_CONCURRENT)
+            concurrent_num = min(len(proxies), self.request_concurrent)
             selected_proxies = random.sample(proxies, concurrent_num)
         else:
             scope = self.SCORE_RANDOM_SCOPE
             n = min(scope, len(proxies))
-            concurrent_num = min(n, self.REQUEST_CONCURRENT)
+            concurrent_num = min(n, self.request_concurrent)
 
             def selector(proxy):
                 score, used = proxy.score, proxy.used
@@ -161,6 +165,7 @@ class ProxyManager(object):
     async def add_proxies(self, pattern_str, num=30):
         added_num = 0
         for source in proxy_sources:
+            logger.info("start fetching proxy from source {}".format(source.tag))
             async for proxy in source.fetch_proxies():
                 if await self._add_proxy(proxy, pattern_str):
                     added_num += 1
@@ -184,11 +189,17 @@ class ProxyManager(object):
         return True
 
     async def add_proxies_for_pattern(self, pattern_str):
+        added_num = 0
         proxy_num = await self.redis.hlen(pattern_str)
         if proxy_num < self.PROXY_NUM_SHRESHOLD:
+            logger.info("proxy not enough for {}, now has {}, start adding".format(pattern_str, proxy_num))
             if pattern_str != 'public_proxies':
-                await self.sync_public(pattern_str)
-            await self.add_proxies(pattern_str, self.ADD_NUM)
+                added_num += await self.sync_public(pattern_str)
+            added_num += await self.add_proxies(pattern_str, self.ADD_NUM)
+            logger.info("{} proxies added for {}".format(added_num, pattern_str))
+            if added_num == 0:
+                logger.warning("no proxy fetched, consider adding more sources")
+        return added_num
 
 
 class ProxySource(object):

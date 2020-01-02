@@ -13,5 +13,9 @@ class Config(object):
     redis_password = getenv('redis_password')
     redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
 
+    timeout = 30
+    request_concurrent = 10
+    style = 'score'
+
 
 conf = Config()
