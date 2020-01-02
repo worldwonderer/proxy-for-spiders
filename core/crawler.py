@@ -70,7 +70,7 @@ async def crawl(method, url, proxies=None, **kwargs):
                 r = await task
             except asyncio.CancelledError:
                 continue
-            if (need_check and not isinstance(r, FailedResponse) and r.valid) or not need_check:
+            if (need_check and r.valid) or not need_check:
                 for t in tasks:
                     if not t.done():
                         t.cancel()

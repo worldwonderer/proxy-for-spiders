@@ -236,7 +236,7 @@ class ProxyApi(ProxySource):
         self.valid_time = valid_time
 
     async def fetch_proxies(self):
-        r = await crawl("GET", self.api, proxies=['http://127.0.0.1:8001'], timeout=3)
+        r = await crawl("GET", self.api, timeout=3)
         if isinstance(r, FailedResponse):
             raise ConnectionError("unable to fetch api {}".format(self.api))
         text = await r.text()
