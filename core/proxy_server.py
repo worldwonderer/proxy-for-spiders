@@ -31,7 +31,7 @@ class ProxyServer(web.Application):
         saver = Saver(redis_addr=self._config.redis_addr,
                       password=self._config.redis_password)
         proxy_manager = ProxyManager(
-            request_concurrent=self._config.request_concurrent,
+            request_concurrent=self._config.concurrent,
             redis_addr=self._config.redis_addr,
             password=self._config.redis_password
         )
@@ -85,13 +85,10 @@ class ProxyServer(web.Application):
         r = await forward(request.method, str(request.url), pam, pom, headers=request.headers, body=body,
                           style=self._config.style)
 
-        if r is None:
+        if r is None or r.traceback:
+            text = 'unable to get any response' if r is None else ''.join(r.traceback)
             logger.warning("unable to get any valid response for {}".format(request.url))
-            return web.Response(status=417, text='unable to get any response')
-        elif r.traceback:
-            tb = ''.join(r.traceback)
-            logger.warning("unable to get any valid response for {}".format(request.url))
-            return web.Response(status=417, text=tb)
+            return web.Response(status=417, text=text)
         else:
             text = await r.text()
             logger.info("get valid response for {} via proxy {}".format(request.url, r.proxy))

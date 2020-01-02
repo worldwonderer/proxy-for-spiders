@@ -68,10 +68,10 @@ import redis
 
 r = redis.StrictRedis()
 # whitelist校验
-r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': 'whitelist', 'value':'ratingValue'}))
+r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'pattern': 'movie.douban.com/subject/', 'rule': 'whitelist', 'value':'ratingValue'}))
 
 # xpath校验
-r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
+r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'pattern': 'movie.douban.com/subject/', 'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
 ```
 
 配置校验规则后，代理`https://movie.douban.com/subject/27119724/`类似的页面，proxy_tower会对页面内容做校验，优先返回符合规则的response，并对proxy计分

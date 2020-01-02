@@ -11,10 +11,10 @@ from core import proxy_server
 from config import conf
 
 
-def run_server(port=None):
+def run_server():
     app = proxy_server.ProxyServer(conf)
-    web.run_app(app, port=port)
+    web.run_app(app, port=conf.port)
 
 
 if __name__ == '__main__':
-    run_server(8893)
+    run_server()

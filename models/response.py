@@ -5,8 +5,10 @@ from aiohttp import ClientResponse
 
 class FailedResponse(object):
 
-    def __init__(self):
-        self.traceback = list()
+    cancelled = False
+    proxy = None
+    valid = False
+    traceback = list()
 
 
 class Response(ClientResponse):

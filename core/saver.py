@@ -42,11 +42,10 @@ class Saver(object):
                 elif 0 <= proxy.score < 5:
                     proxy.score += 1
             else:
-                existed_time = int(time.time()) - proxy.insert_time
-                if existed_time > proxy.valid_time > 0:
+                proxy.score -= 1
+                remain_time = proxy.insert_time + proxy.valid_time - int(time.time())
+                if proxy.score <= -3 or (remain_time < 0 < proxy.valid_time):
                     await self._del_proxy_in_pattern(pattern_str, proxy)
-                else:
-                    proxy.score -= 1
 
             proxy.used = True
             await proxy.store(pattern_str, self.redis)
@@ -61,9 +60,6 @@ class Saver(object):
 
     async def _del_proxy_in_pattern(self, pattern_str, proxy):
         fail_key = pattern_str + '_fail'
-        remain_time = proxy.insert_time + proxy.valid_time - int(time.time())
-        if proxy.score <= -10 or (remain_time < 0 < proxy.valid_time and not proxy.used):
-            await self.redis.hdel(pattern_str, str(proxy))
-            if proxy.used:
-                proxy.delete_time = int(time.time())
-                await proxy.store(fail_key, self.redis)
+        await self.redis.hdel(pattern_str, str(proxy))
+        proxy.delete_time = int(time.time())
+        await proxy.store(fail_key, self.redis)
