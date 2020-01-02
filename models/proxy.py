@@ -8,6 +8,7 @@ import aioredis
 
 import log_utils
 from core.crawler import crawl
+from models.response import FailedResponse
 
 
 logger = log_utils.LogHandler(__name__, file=True)
@@ -166,11 +167,14 @@ class ProxyManager(object):
         added_num = 0
         for source in proxy_sources:
             logger.info("start fetching proxy from source {}".format(source.tag))
-            async for proxy in source.fetch_proxies():
-                if await self._add_proxy(proxy, pattern_str):
-                    added_num += 1
-                    if added_num >= num:
-                        break
+            try:
+                async for proxy in source.fetch_proxies():
+                    if await self._add_proxy(proxy, pattern_str):
+                        added_num += 1
+                        if added_num >= num:
+                            break
+            except Exception as e:
+                logger.warning("unable to fetch proxy from {}, {}".format(source.tag, e), exc_info=True)
         return added_num
 
     async def _add_proxy(self, proxy, pattern_str):
@@ -232,7 +236,9 @@ class ProxyApi(ProxySource):
         self.valid_time = valid_time
 
     async def fetch_proxies(self):
-        r = await crawl("GET", self.api)
+        r = await crawl("GET", self.api, timeout=3)
+        if isinstance(r, FailedResponse):
+            raise ConnectionError("unable to fetch api {}".format(self.api))
         text = await r.text()
         proxy_candidates = re.findall(self.proxy_pattern, text)
         for proxy in proxy_candidates:
@@ -241,5 +247,5 @@ class ProxyApi(ProxySource):
 
 proxy_sources = {
     ProxyFile('file', './conf/proxy.txt'),
-    ProxyApi('free_api', 'http://118.24.52.95/get_all/', 300)
+    ProxyApi('free_api', 'http://122.51.7.207:5010/get_all/', 300)
 }

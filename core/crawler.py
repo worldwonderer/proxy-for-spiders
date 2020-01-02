@@ -17,7 +17,8 @@ async def _crawl(method, url, session, **kwargs):
     proxy = kwargs.get('proxy')
     if proxy is not None:
         kwargs['proxy'] = str(proxy)
-    kwargs.update({'ssl': False, 'timeout': conf.timeout})
+    timeout = kwargs.get('timeout') or conf.timeout
+    kwargs.update({'ssl': False, 'timeout': timeout})
     try:
         async with session.request(method, url, **kwargs) as r:
             r.proxy = proxy
@@ -62,7 +63,7 @@ async def crawl(method, url, proxies=None, **kwargs):
 
     result = FailedResponse()
     r = None
-    need_check = any(proxies)
+    need_check = any(proxies) and pattern is not None
     try:
         if need_check:
             tasks = [asyncio.ensure_future(_crawl_with_check(method, url, session, pattern,
