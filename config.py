@@ -15,6 +15,7 @@ class Config(object):
 
     timeout = 30
     request_concurrent = 10
+    style = 'score'
 
 
 conf = Config()

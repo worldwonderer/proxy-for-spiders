@@ -25,9 +25,11 @@ async def _crawl(method, url, session, **kwargs):
             r.__class__ = Response
     except asyncio.CancelledError:
         r = FailedResponse()
+        r.proxy = proxy
         r.traceback = ['\n'+str(proxy)+'\n' + 'cancelled'+'\n']
     except Exception:
         r = FailedResponse()
+        r.proxy = proxy
         r.traceback = ['\n'+str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
     return r
 
@@ -80,6 +82,7 @@ async def crawl(method, url, proxies=None, **kwargs):
                 result = r
                 break
             else:
+                logger.info("response from {} for {} is invalid, trying other proxies".format(r.proxy, url))
                 result.traceback += r.traceback
         if r is not None and result is None:
             result = r
