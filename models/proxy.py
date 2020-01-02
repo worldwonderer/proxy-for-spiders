@@ -93,7 +93,7 @@ class ProxyManager(object):
 
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
-    PROXY_NUM_SHRESHOLD = 100
+    PROXY_NUM_SHRESHOLD = 300
     ADD_NUM = 30
     _concurrent_semaphore = dict()
 
@@ -181,7 +181,7 @@ class ProxyManager(object):
         for p in {pattern_str, 'public_proxies'}:
             del_info_json = await self.redis.hget(p+'_fail', str(proxy))
             if del_info_json is not None:
-                del_info = json.load(del_info_json)
+                del_info = json.loads(del_info_json)
                 del_time = del_info['delete_time']
                 if int(time.time()) - del_time < self.RENEW_TIME:
                     return False
@@ -236,7 +236,7 @@ class ProxyApi(ProxySource):
         self.valid_time = valid_time
 
     async def fetch_proxies(self):
-        r = await crawl("GET", self.api, timeout=3)
+        r = await crawl("GET", self.api, proxies=['http://127.0.0.1:8001'], timeout=3)
         if isinstance(r, FailedResponse):
             raise ConnectionError("unable to fetch api {}".format(self.api))
         text = await r.text()

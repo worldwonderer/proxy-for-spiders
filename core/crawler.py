@@ -1,13 +1,12 @@
 import sys
 import asyncio
-import datetime
 import traceback
 
 import aiohttp
 
 import log_utils
 from config import conf
-from models.response import Response, FailedResponse
+from models.response import FailedResponse, Response
 
 
 logger = log_utils.LogHandler(__name__, file=True)
@@ -17,33 +16,27 @@ async def _crawl(method, url, session, **kwargs):
     proxy = kwargs.get('proxy')
     if proxy is not None:
         kwargs['proxy'] = str(proxy)
-    timeout = kwargs.get('timeout') or conf.timeout
-    kwargs.update({'ssl': False, 'timeout': timeout})
+    kwargs.update({'ssl': False, 'timeout': kwargs.get('timeout') or conf.timeout})
+
     try:
         async with session.request(method, url, **kwargs) as r:
-            r.proxy = proxy
-            await r.read()
             r.__class__ = Response
+            await r.read()
     except asyncio.CancelledError:
         r = FailedResponse()
-        r.proxy = proxy
-        r.traceback = ['\n'+str(proxy)+'\n' + 'cancelled'+'\n']
-    except Exception:
+        r.cancelled = True
+    except Exception as e:
         r = FailedResponse()
-        r.proxy = proxy
         r.traceback = ['\n'+str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
+    r.proxy = proxy
     return r
 
 
 async def _crawl_with_check(method, url, session, pattern, **kwargs):
     r = await _crawl(method, url, session, **kwargs)
-    if len(r.traceback) == 0:
-        r.traceback = await pattern.check(r)
-    r.valid = len(r.traceback) == 0
-    if 'cancelled' not in ''.join(r.traceback):
-        now = datetime.datetime.now().strftime("%H:%M")
-        await pattern.counter(now, r.valid)
-        await pattern.score_and_save(kwargs['proxy'], r)
+    if hasattr(r, 'cancelled') and r.cancelled:
+        return r
+    await pattern.check(r)
     return r
 
 
@@ -63,6 +56,7 @@ async def crawl(method, url, proxies=None, **kwargs):
 
     result = FailedResponse()
     r = None
+
     need_check = any(proxies) and pattern is not None
     try:
         if need_check:
@@ -76,7 +70,7 @@ async def crawl(method, url, proxies=None, **kwargs):
                 r = await task
             except asyncio.CancelledError:
                 continue
-            if (need_check and r.valid) or not need_check:
+            if (need_check and not isinstance(r, FailedResponse) and r.valid) or not need_check:
                 for t in tasks:
                     if not t.done():
                         t.cancel()

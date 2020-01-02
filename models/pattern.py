@@ -11,6 +11,9 @@ from lxml import etree
 from pygtrie import CharTrie
 
 
+from models.response import FailedResponse
+
+
 class Checker(object):
 
     def __init__(self, global_blacklist=None):
@@ -73,15 +76,22 @@ class Pattern(object):
         return [x, y]
 
     async def check(self, response):
-        rule, value = self.rule, self.value
-        text = await response.text()
-        result = self.checker.check(response.status, text, rule, value)
-        if result is None:
-            return list()
+        if isinstance(response, FailedResponse):
+            tb = response.traceback
         else:
-            return [result]
+            rule, value = self.rule, self.value
+            text = await response.text()
+            reason = self.checker.check(response.status, text, rule, value)
+            tb = list()
+            if reason is not None:
+                tb.append(reason)
+        response.valid = len(tb) == 0
+        response.traceback = tb
+        await self.counter(response.valid)
+        await self.score_and_save(response)
 
-    async def counter(self, now, valid):
+    async def counter(self, valid):
+        now = datetime.datetime.now().strftime("%H:%M")
         async with self.counter_lock:
             c = self.success_counter if valid else self.fail_counter
             if now in c:
@@ -93,10 +103,10 @@ class Pattern(object):
                 for _ in range(del_num):
                     c.popitem(last=False)
 
-    async def score_and_save(self, proxy, response):
+    async def score_and_save(self, response):
         if self.saver is None:
             return
-        await self.saver.save_result(str(self), str(proxy), response)
+        await self.saver.save_result(str(self), str(response.proxy), response)
 
     def to_dict(self):
         return {

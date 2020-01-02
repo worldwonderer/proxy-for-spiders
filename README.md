@@ -69,10 +69,10 @@ import redis
 
 r = redis.StrictRedis()
 # whitelist
-r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': 'whitelist', 'value':'ratingValue'}))
+r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'pattern': 'movie.douban.com/subject/', rule': 'whitelist', 'value':'ratingValue'}))
 
 # xpath
-r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
+r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'pattern': 'movie.douban.com/subject/', 'rule': '//*[@id="recommendations"]/h2/i', 'value':'喜欢这部电影的人也喜欢'}))
 ```
 
 After configuring the verification rule for the pattern `movie.douban.com/subject/`，when you crawl web pages like `https://movie.douban.com/subject/27119724/`，proxy_tower will verify the content of response and score the proxy
