@@ -17,7 +17,6 @@ async def _crawl(method, url, session, **kwargs):
     if proxy is not None:
         kwargs['proxy'] = str(proxy)
     kwargs.update({'ssl': False, 'timeout': kwargs.get('timeout') or conf.timeout})
-
     try:
         async with session.request(method, url, **kwargs) as r:
             r.__class__ = Response

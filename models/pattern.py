@@ -84,7 +84,7 @@ class Pattern(object):
             reason = self.checker.check(response.status, text, rule, value)
             tb = list()
             if reason is not None:
-                tb.append(reason)
+                tb.append('\n'+reason+'\n')
         response.valid = len(tb) == 0
         response.traceback = tb
         await self.counter(response.valid)
