@@ -3,6 +3,7 @@ import json
 import time
 import heapq
 import random
+from collections import defaultdict
 
 import aioredis
 
@@ -95,7 +96,7 @@ class ProxyManager(object):
     RENEW_TIME = 8 * 60 * 60
     PROXY_NUM_SHRESHOLD = 300
     ADD_NUM = 30
-    _concurrent_semaphore = dict()
+    _last_add_time = defaultdict(int)
 
     def __init__(self, request_concurrent, redis_addr='redis://localhost', password=None, tags_source_map=None):
         self._redis_addr = redis_addr
@@ -193,6 +194,12 @@ class ProxyManager(object):
         return True
 
     async def add_proxies_for_pattern(self, pattern_str):
+        now = int(time.time())
+        if now - self._last_add_time[pattern_str] < 5:
+            logger.debug("fetch proxies too frequently")
+            return 0
+        else:
+            self._last_add_time[pattern_str] = now
         added_num = 0
         proxy_num = await self.redis.hlen(pattern_str)
         if proxy_num < self.PROXY_NUM_SHRESHOLD:

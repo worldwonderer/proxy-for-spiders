@@ -36,6 +36,9 @@ class Saver(object):
     async def _score_counter(self, pattern_str, proxy_str, valid):
         async with self.pattern_lock_map[pattern_str]:
             proxy = await Proxy.discard(pattern_str, proxy_str, self.redis)
+            if proxy is None:
+                return
+
             if valid:
                 if proxy.score < 0:
                     proxy.score = 0
@@ -46,6 +49,7 @@ class Saver(object):
                 remain_time = proxy.insert_time + proxy.valid_time - int(time.time())
                 if proxy.score <= -3 or (remain_time < 0 < proxy.valid_time):
                     await self._del_proxy_in_pattern(pattern_str, proxy)
+                    return
 
             proxy.used = True
             await proxy.store(pattern_str, self.redis)
