@@ -95,12 +95,11 @@ class ProxyManager(object):
     RENEW_TIME = 8 * 60 * 60
     _last_add_time = defaultdict(int)
 
-    def __init__(self, concurrent, pool_size, redis_addr='redis://localhost', password=None, tags_source_map=None):
+    def __init__(self, config, redis_addr='redis://localhost', password=None, tags_source_map=None):
+        self.config = config
         self._redis_addr = redis_addr
         self._password = password
         self.tags_source_map = tags_source_map or dict()
-        self.concurrent = concurrent
-        self.pool_size = pool_size
 
     async def __aenter__(self):
         self.redis = await aioredis.create_redis_pool(self._redis_addr,
@@ -121,15 +120,15 @@ class ProxyManager(object):
             proxies = [p.to_dict() for p in proxies]
         return proxies
 
-    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, style='score'):
+    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, mode='score'):
         proxies = await self.proxies(need_https, pattern_str)
-        if style == 'shuffle':
-            concurrent_num = min(len(proxies), self.concurrent)
+        if mode == 'shuffle':
+            concurrent_num = min(len(proxies), self.config.concurrent)
             selected_proxies = random.sample(proxies, concurrent_num)
         else:
             scope = self.SCORE_RANDOM_SCOPE
             n = min(scope, len(proxies))
-            concurrent_num = min(n, self.concurrent)
+            concurrent_num = min(n, self.config.concurrent)
 
             def selector(proxy):
                 score, used = proxy.score, proxy.used
@@ -197,7 +196,7 @@ class ProxyManager(object):
     async def add_proxies_for_pattern(self, pattern_str):
         added_num = 0
         proxy_count = await self.proxy_count(pattern_str)
-        if proxy_count < self.pool_size:
+        if proxy_count < self.config.pool_size:
             now = int(time.time())
             if now - self._last_add_time[pattern_str] < 5:
                 return added_num
@@ -207,7 +206,7 @@ class ProxyManager(object):
             logger.info("proxy not enough for {}, now has {}, start adding".format(pattern_str, proxy_count))
             if pattern_str != 'public_proxies':
                 added_num += await self.sync_public(pattern_str)
-            added_num += await self.add_proxies(pattern_str, self.pool_size-proxy_count)
+            added_num += await self.add_proxies(pattern_str, self.config.pool_size-proxy_count)
             logger.info("{} proxies added for {}".format(added_num, pattern_str))
             if added_num == 0:
                 logger.warning("no proxy fetched, consider adding more sources")

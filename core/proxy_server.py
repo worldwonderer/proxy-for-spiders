@@ -27,17 +27,17 @@ class ProxyServer(web.Application):
         self._config = config
 
     async def core_session(self, app):
-        checker = Checker(global_blacklist=self._config.global_blacklist)
-        saver = Saver(redis_addr=self._config.redis_addr,
-                      password=self._config.redis_password)
+        app['config'] = self._config
+        checker = Checker(global_blacklist=app['config'].global_blacklist)
+        saver = Saver(redis_addr=app['config'].redis_addr,
+                      password=app['config'].redis_password)
         proxy_manager = ProxyManager(
-            concurrent=self._config.concurrent,
-            pool_size=self._config.pool_size,
-            redis_addr=self._config.redis_addr,
-            password=self._config.redis_password
+            config=app['config'],
+            redis_addr=app['config'].redis_addr,
+            password=app['config'].redis_password
         )
-        pattern_manager = PatternManager(checker, saver, redis_addr=self._config.redis_addr,
-                                         password=self._config.redis_password)
+        pattern_manager = PatternManager(checker, saver, redis_addr=app['config'].redis_addr,
+                                         password=app['config'].redis_password)
         await saver.__aenter__()
         await proxy_manager.__aenter__()
         await pattern_manager.__aenter__()
@@ -46,7 +46,6 @@ class ProxyServer(web.Application):
         app['pam'] = pattern_manager
         app['ck'] = checker
         app['sv'] = saver
-        app['config'] = self._config
         yield
         await app['pam'].__aexit__(None, None, None)
         await app['pom'].__aexit__(None, None, None)
@@ -85,7 +84,7 @@ class ProxyServer(web.Application):
         logger.info('received request {} from {}'.format(request.url, request.remote))
 
         r = await forward(request.method, str(request.url), pam, pom, headers=request.headers, body=body,
-                          style=self._config.style)
+                          mode=request.app['config'].mode)
 
         if r is None or r.traceback:
             text = 'unable to get any response' if r is None else ''.join(r.traceback)

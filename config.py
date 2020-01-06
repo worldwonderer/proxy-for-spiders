@@ -15,7 +15,7 @@ class Config(object):
     timeout = 10
     concurrent = 10
     pool_size = 50
-    style = 'score'
+    mode = 'score'
     global_blacklist = [
         'antispider',
         'forbidden',
