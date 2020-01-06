@@ -1,7 +1,6 @@
 import copy
 from aiohttp import web
 
-
 dashboard_data_template = {
     'code': 20000,
     'data': {
@@ -20,6 +19,7 @@ async def dashboard(request):
         '/dev-api/user/logout': logout,
         '/dev-api/user/info': user_info,
         '/dev-api/status': status,
+        '/dev-api/index': index,
     }
     path = request.path
     if path in dashboard_router:
@@ -44,12 +44,15 @@ async def proxies(request):
 
 
 async def login(request):
-    # to be implemented
-    return web.json_response(data={'code': 20000, 'data': 'admin'})
+    info = await request.json()
+    username, password = info['username'], info['password']
+    if username == 'admin' and password == request.app['config'].secret:
+        return web.json_response(data={'code': 20000, 'data': {'token': 'admin'}})
+    else:
+        return web.json_response(data={'code': 60204, 'message': 'Account and password are incorrect.'})
 
 
 async def logout(request):
-    # to be implemented
     return web.json_response(data={'code': 20000, 'data': 'success'})
 
 
@@ -62,15 +65,18 @@ async def status(request):
     return web.json_response(data=r)
 
 
-async def user_info(request):
-    # to be implemented
+async def index(request):
     data = {
-        'roles': ['admin'],
-        'introduction': 'I am a super administrator',
-        'avatar': 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
-        'name': 'Super Admin'
+        'proxy_count': await request.app['pom'].proxy_count('public_proxies'),
+        'pattern_count': await request.app['pam'].pattern_count(),
+        'success_requests': request.app['sv'].success_count,
+        'total_requests': request.app['sv'].total_count
     }
-    return web.json_response(data={'code': 20000, 'data': data})
+    return web.json_response(data={'code': 20000, 'data': data })
+
+
+async def user_info(request):
+    return web.json_response(data={'code': 20000, 'data': request.app['config'].admin_token})
 
 
 async def pattern(request):

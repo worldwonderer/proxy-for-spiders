@@ -76,7 +76,7 @@ async def crawl(method, url, proxies=None, **kwargs):
                 result = r
                 break
             else:
-                logger.info("response from {} for {} is invalid, trying other proxies".format(r.proxy, url))
+                logger.debug("response from {} for {} is invalid, trying other proxies".format(r.proxy, url))
                 result.traceback += r.traceback
         if r is not None and result is None:
             result = r

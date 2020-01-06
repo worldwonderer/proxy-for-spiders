@@ -9,8 +9,10 @@ from models.proxy import Proxy
 
 class Saver(object):
 
-    pattern_lock_map = defaultdict(asyncio.Lock)
     RESULT_SAVE_NUM = 100
+    pattern_lock_map = defaultdict(asyncio.Lock)
+    success_count = 0
+    total_count = 0
 
     def __init__(self, redis_addr='redis://localhost', password=None):
         self._redis_addr = redis_addr
@@ -39,11 +41,13 @@ class Saver(object):
             if proxy is None:
                 return
 
+            self.total_count += 1
             if valid:
                 if proxy.score < 0:
                     proxy.score = 0
                 elif 0 <= proxy.score < 5:
                     proxy.score += 1
+                self.success_count += 1
             else:
                 proxy.score -= 1
                 remain_time = proxy.insert_time + proxy.valid_time - int(time.time())

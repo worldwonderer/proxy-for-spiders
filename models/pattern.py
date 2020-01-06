@@ -144,6 +144,9 @@ class PatternManager(object):
             self.redis.close()
             await self.redis.wait_closed()
 
+    async def pattern_count(self):
+        return await self.redis.hlen(self.key)
+
     async def patterns(self, format_type='raw'):
         d = await self.redis.hgetall(self.key)
         patterns = [json.loads(v) for v in d.values()]
