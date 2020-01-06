@@ -20,6 +20,7 @@ async def dashboard(request):
         '/dev-api/user/info': user_info,
         '/dev-api/status': status,
         '/dev-api/index': index,
+        '/dev-api/config': config,
     }
     path = request.path
     if path in dashboard_router:
@@ -53,7 +54,7 @@ async def login(request):
 
 
 async def logout(request):
-    return web.json_response(data={'code': 20000, 'data': 'success'})
+    return web.json_response(data={'code': 20000, 'message': 'success'})
 
 
 async def status(request):
@@ -72,7 +73,7 @@ async def index(request):
         'success_requests': request.app['sv'].success_count,
         'total_requests': request.app['sv'].total_count
     }
-    return web.json_response(data={'code': 20000, 'data': data })
+    return web.json_response(data={'code': 20000, 'data': data})
 
 
 async def user_info(request):
@@ -85,4 +86,20 @@ async def pattern(request):
         await request.app['pam'].add(d['pattern'], d['rule'], d['value'])
     elif request.method == 'DELETE':
         await request.app['pam'].delete(d['pattern'])
-    return web.json_response(data={'code': 20000, 'data': 'success'})
+    return web.json_response(data={'code': 20000, 'message': 'success'})
+
+
+async def config(request):
+    fields = ['mode', 'pool_size', 'concurrent', 'timeout']
+    if request.method == 'GET':
+        data = dict()
+        for k in fields:
+            if hasattr(request.app['config'], k):
+                data[k] = getattr(request.app['config'], k)
+        return web.json_response(data={'code': 20000, 'data': data})
+    else:
+        data = await request.json()
+        for k in data:
+            if k in fields:
+                setattr(request.app['config'], k, data[k])
+        return web.json_response(data={'code': 20000, 'message': 'success'})

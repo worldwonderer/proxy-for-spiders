@@ -6,7 +6,7 @@ from core.crawler import crawl
 async def forward(method, url, pam, pom, **kwargs):
     headers = kwargs.get('headers')
     content = kwargs.get('content')
-    style = kwargs.get('style', 'score')
+    mode = kwargs.get('mode', 'score')
 
     need_https = 'Need-Https' in headers
     if need_https:
@@ -16,7 +16,7 @@ async def forward(method, url, pam, pom, **kwargs):
     await cookies_handler(headers, pam, pattern_str)
     await pom.add_proxies_for_pattern(pattern_str)
     proxies = await pom.select_proxies(pattern_str, need_https=need_https,
-                                       prefer_used=True, style=style)
+                                       prefer_used=True, mode=mode)
     pattern = pam.get_pattern(pattern_str)
     return await crawl(method, url, proxies, pattern=pattern, data=content, headers=headers)
 
