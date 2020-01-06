@@ -31,7 +31,8 @@ class ProxyServer(web.Application):
         saver = Saver(redis_addr=self._config.redis_addr,
                       password=self._config.redis_password)
         proxy_manager = ProxyManager(
-            request_concurrent=self._config.concurrent,
+            concurrent=self._config.concurrent,
+            pool_size=self._config.pool_size,
             redis_addr=self._config.redis_addr,
             password=self._config.redis_password
         )
@@ -45,6 +46,7 @@ class ProxyServer(web.Application):
         app['pam'] = pattern_manager
         app['ck'] = checker
         app['sv'] = saver
+        app['config'] = self._config
         yield
         await app['pam'].__aexit__(None, None, None)
         await app['pom'].__aexit__(None, None, None)
