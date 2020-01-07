@@ -55,7 +55,7 @@ async def crawl(method, url, proxies=None, **kwargs):
         session = aiohttp.ClientSession()
 
     result = FailedResponse()
-    need_check = any(proxies) and pattern is not None
+    need_check = pattern is not None
     try:
         if need_check:
             tasks = [asyncio.ensure_future(_crawl_with_check(method, url, session, pattern,
