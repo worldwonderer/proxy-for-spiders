@@ -87,7 +87,7 @@ class ProxyServer(web.Application):
                           mode=request.app['config'].mode)
 
         if r is None or r.traceback:
-            text = 'unable to get any response' if r is None else ''.join(r.traceback)
+            text = 'unable to get any response' if r is None else r.traceback
             logger.warning("unable to get any valid response for {}".format(request.url))
             return web.Response(status=417, text=text)
         else:

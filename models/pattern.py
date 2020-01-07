@@ -82,10 +82,10 @@ class Pattern(object):
             rule, value = self.rule, self.value
             text = await response.text()
             reason = self.checker.check(response.status, text, rule, value)
-            tb = list()
+            tb = None
             if reason is not None:
-                tb.append('\n'+reason+'\n')
-        response.valid = len(tb) == 0
+                tb = str(response.proxy)+'\n'+reason + '\n'
+        response.valid = tb is None
         response.traceback = tb
         await self.counter(response.valid)
         await self.score_and_save(response)

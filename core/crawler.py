@@ -26,7 +26,8 @@ async def _crawl(method, url, session, **kwargs):
         r.cancelled = True
     except Exception as e:
         r = FailedResponse()
-        r.traceback = ['\n'+str(proxy)+'\n'] + traceback.format_exception(*sys.exc_info())
+        r.traceback = str(proxy) + '\n' + ''.join(traceback.format_exception(*sys.exc_info())) + '\n'
+        # logger.debug(e, exc_info=True)
     r.proxy = proxy
     return r
 
@@ -54,8 +55,6 @@ async def crawl(method, url, proxies=None, **kwargs):
         session = aiohttp.ClientSession()
 
     result = FailedResponse()
-    r = None
-
     need_check = any(proxies) and pattern is not None
     try:
         if need_check:
@@ -76,10 +75,10 @@ async def crawl(method, url, proxies=None, **kwargs):
                 result = r
                 break
             else:
-                logger.debug("response from {} for {} is invalid, trying other proxies".format(r.proxy, url))
+                if result.traceback is None:
+                    result.traceback = ''
                 result.traceback += r.traceback
-        if r is not None and result is None:
-            result = r
+                logger.debug("response from {} for {} is invalid, trying other proxies".format(r.proxy, url))
         return result
     except Exception as e:
         logger.error(e, exc_info=True)

@@ -8,14 +8,14 @@ class FailedResponse(object):
     cancelled = False
     proxy = None
     valid = False
-    traceback = list()
+    traceback = None
 
 
 class Response(ClientResponse):
 
     proxy = None
     valid = None
-    traceback = list()
+    traceback = None
 
     def get_encoding(self):
         encoding = super(Response, self).get_encoding()
@@ -31,5 +31,5 @@ class Response(ClientResponse):
             'valid': self.valid,
             'text': text,
             'proxy': str(self.proxy),
-            'traceback': ''.join(self.traceback)
+            'traceback': self.traceback
         })
