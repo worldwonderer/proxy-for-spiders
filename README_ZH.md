@@ -26,30 +26,26 @@
 * Redis
 
 ## 使用方法
-1. 安装依赖 `pip install -r requirements.txt`
-2. 启动 `python proxy_entrance.py`
-3. 测试 `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
+1. 安装依赖 `pip3 install -r requirements.txt`
+2. 启动 `python3 proxy_entrance.py`
+3. 测试 `python3 bench.py`
 
 ## 配置 config.py
 ```shell
-global_blacklist = [
-    'antispider',
-    'forbidden'
-]  # 全局黑名单关键词列表，如果response中包含列表中的关键词，判定response无效
-
 # 本项目重度依赖redis，用于存储校验规则和代理
 redis_host = getenv('redis_host', 'redis')
 redis_port = getenv('redis_port', 6379)
 redis_db = getenv('redis_db', 0)
 redis_password = getenv('redis_password', '')
 redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
+
+# 更多配置，参见config.py
 ```
 
 ## Docker
 ```shell
+# 已有redis服务。注意不能使用127.0.0.1地址，docker无法连接上
 docker pull worldwonderer/proxy_tower
-
-# 已有redis服务
 docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_tower
 
 # 无redis服务，启用redis container

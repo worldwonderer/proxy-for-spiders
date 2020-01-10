@@ -18,7 +18,7 @@ Note: proxy_tower itself does not seek proxies
 Multiple forwarding can increase the success rate of using free or unstable proxies
 
 * Response verification
-    * Pattern is a reused page of the target site with same URL prefix and similar HTML structure，such as `movie.douban.com/subject/` for `https://movie.douban.com/subject/6981153/`
+    * Pattern is a reused page of the target site with same URL prefix and similar HTML structure，such as `movie.douban.com/subject/` for `http://movie.douban.com/subject/6981153/`
     * Patterns and verification rules are stored in a prefix tree which helps verify responses from different sites easily and effectively
     * Separated proxy pools for different patterns
 
@@ -27,30 +27,26 @@ Multiple forwarding can increase the success rate of using free or unstable prox
 * redis server
 
 ## Getting started
-1. `pip install -r requirements.txt`
-2. `python proxy_entrance.py`
-3. `curl -x "http://0.0.0.0:8893" "http://www.httpbin.org/ip"`
+1. `pip3 install -r requirements.txt`
+2. `python3 proxy_entrance.py`
+3. `python3 bench.py`
 
 ## config.py
 ```shell
-global_blacklist = [
-    'antispider',
-    'forbidden'
-]  # global keywords blacklist. if response contains any words in it, response is considered invalid
-
 # proxy_tower relies heavily on redis which is used for storing proxies and validation rules
-redis_host = getenv('redis_host', 'redis')
+redis_host = getenv('redis_host', '127.0.0.1')
 redis_port = getenv('redis_port', 6379)
 redis_db = getenv('redis_db', 0)
-redis_password = getenv('redis_password', '')
+redis_password = getenv('redis_password')
 redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
+
+# more options, see config.py
 ```
 
 ## Docker
 ```shell
+# with existing redis addr. Notice that you cannot use 127.0.0.1 redis address
 docker pull worldwonderer/proxy_tower
-
-# with existing redis addr
 docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_tower
 
 # don't have existing redis
