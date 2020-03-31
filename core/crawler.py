@@ -1,5 +1,5 @@
-import sys
 import asyncio
+import sys
 import traceback
 
 import aiohttp
@@ -7,7 +7,6 @@ import aiohttp
 import log_utils
 from config import conf
 from models.response import FailedResponse, Response
-
 
 logger = log_utils.LogHandler(__name__, file=True)
 

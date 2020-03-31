@@ -31,7 +31,7 @@
 3. 测试 `python3 bench.py`
 
 ## 配置 config.py
-```shell
+```python
 # 本项目重度依赖redis，用于存储校验规则和代理
 redis_host = getenv('redis_host', 'redis')
 redis_port = getenv('redis_port', 6379)
@@ -58,7 +58,7 @@ docker-compose up
 1. `whitelist`，即如果response中包含了这些关键词，判定response有效
 2. `xpath`，即如果response中能用该xpath解析到对应的内容，判定response有效
 
-```shell
+```python
 import json
 import redis
 
@@ -76,7 +76,7 @@ r.hset("response_check_pattern", "movie.douban.com/subject/", json.dumps({'patte
 
 可以在models/proxy.py中拓展proxy源，目前支持文件和API两种方式
 
-```shell
+```python
 # 文件
 class ProxyFile(ProxySource):
 

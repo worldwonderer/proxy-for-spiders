@@ -1,5 +1,5 @@
-import time
 import asyncio
+import time
 from collections import defaultdict
 
 import aioredis
@@ -8,7 +8,6 @@ from models.proxy import Proxy
 
 
 class Saver(object):
-
     RESULT_SAVE_NUM = 100
     pattern_lock_map = defaultdict(asyncio.Lock)
     success_count = 0
@@ -33,7 +32,7 @@ class Saver(object):
         if hasattr(response, 'info_json'):
             info = await response.info_json()
             await asyncio.gather(*[self.redis.lpush(key, info),
-                                 self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM-1)])
+                                   self.redis.ltrim(key, 0, self.RESULT_SAVE_NUM - 1)])
 
     async def _score_counter(self, pattern_str, proxy_str, valid):
         async with self.pattern_lock_map[pattern_str]:

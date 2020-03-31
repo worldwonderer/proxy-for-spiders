@@ -4,7 +4,6 @@ from aiohttp import ClientResponse
 
 
 class FailedResponse(object):
-
     cancelled = False
     proxy = None
     valid = False
@@ -12,7 +11,6 @@ class FailedResponse(object):
 
 
 class Response(ClientResponse):
-
     proxy = None
     valid = None
     traceback = None
