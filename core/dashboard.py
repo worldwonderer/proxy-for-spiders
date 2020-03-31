@@ -38,11 +38,17 @@ async def patterns(request):
 
 
 async def proxies(request):
-    r = copy.deepcopy(dashboard_data_template)
-    items = await request.app['pom'].proxies(format_type='dict')
-    r['data']['items'] = items
-    r['data']['total'] = len(items)
-    return web.json_response(data=r)
+    if request.method == 'GET':
+        r = copy.deepcopy(dashboard_data_template)
+        pattern_str = request.query.get('pattern', 'public_proxies')
+        items = await request.app['pom'].proxies(pattern_str=pattern_str, format_type='dict')
+        r['data']['items'] = items
+        r['data']['total'] = len(items)
+        return web.json_response(data=r)
+    elif request.method == 'DELETE':
+        pattern_str = request.query.get('pattern', 'public_proxies')
+        await request.app['pom'].clean_proxies(pattern_str=pattern_str)
+        return web.json_response(data={'code': 20000, 'message': 'success'})
 
 
 async def login(request):
