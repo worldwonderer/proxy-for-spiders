@@ -1,6 +1,7 @@
 from socket import AddressFamily
 
 import psutil
+import requests
 from aiohttp import web
 from multidict import CIMultiDict
 
@@ -67,6 +68,7 @@ class ProxyServer(web.Application):
             for f in i:
                 if f.family == AddressFamily.AF_INET:
                     ips.append(f.address)
+        ips.append(requests.get('http://httpbin.org/ip').json()['origin'])
         return ips
 
     async def receive_request(self, request):
