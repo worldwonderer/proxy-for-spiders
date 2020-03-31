@@ -1,8 +1,8 @@
-import re
-import json
-import time
 import heapq
+import json
 import random
+import re
+import time
 from collections import defaultdict
 
 import aioredis
@@ -11,12 +11,10 @@ import log_utils
 from core.crawler import crawl
 from models.response import FailedResponse
 
-
 logger = log_utils.LogHandler(__name__, file=True)
 
 
 class Proxy(object):
-
     _score = 0
 
     def __init__(self, ip, port, **kwargs):
@@ -90,7 +88,6 @@ class Proxy(object):
 
 
 class ProxyManager(object):
-
     SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     _last_add_time = defaultdict(int)
@@ -135,6 +132,7 @@ class ProxyManager(object):
                 if used and prefer_used:
                     score *= 1.5
                 return score
+
             selected_proxies = random.sample(
                 heapq.nlargest(
                     n, proxies, key=lambda a: selector(a)
@@ -177,7 +175,7 @@ class ProxyManager(object):
 
     async def _add_proxy(self, proxy, pattern_str):
         for p in {pattern_str, 'public_proxies'}:
-            del_info_json = await self.redis.hget(p+'_fail', str(proxy))
+            del_info_json = await self.redis.hget(p + '_fail', str(proxy))
             if del_info_json is not None:
                 del_info = json.loads(del_info_json)
                 del_time = del_info['delete_time']
@@ -206,7 +204,7 @@ class ProxyManager(object):
             logger.info("proxy not enough for {}, now has {}, start adding".format(pattern_str, proxy_count))
             if pattern_str != 'public_proxies':
                 added_num += await self.sync_public(pattern_str)
-            added_num += await self.add_proxies(pattern_str, self.config.pool_size-proxy_count)
+            added_num += await self.add_proxies(pattern_str, self.config.pool_size - proxy_count)
             logger.info("{} proxies added for {}".format(added_num, pattern_str))
             if added_num == 0:
                 logger.warning("no proxy fetched, consider adding more sources")
@@ -214,7 +212,6 @@ class ProxyManager(object):
 
 
 class ProxySource(object):
-
     proxy_pattern = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}"
 
     async def fetch_proxies(self):

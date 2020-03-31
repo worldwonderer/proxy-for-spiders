@@ -1,15 +1,14 @@
-import re
-import sys
-import json
 import asyncio
 import datetime
+import json
+import re
+import sys
 import traceback
 from collections import OrderedDict
 
 import aioredis
 from lxml import etree
 from pygtrie import CharTrie
-
 
 from models.response import FailedResponse
 
@@ -69,7 +68,7 @@ class Pattern(object):
         y = list()
         for t in self.success_counter:
             if t in self.fail_counter:
-                y.append((self.success_counter[t]/(self.fail_counter[t] + self.success_counter[t])) * 100)
+                y.append((self.success_counter[t] / (self.fail_counter[t] + self.success_counter[t])) * 100)
             else:
                 y.append(100)
             x.append(t)
@@ -84,7 +83,7 @@ class Pattern(object):
             reason = self.checker.check(response.status, text, rule, value)
             tb = None
             if reason is not None:
-                tb = str(response.proxy)+'\n'+reason + '\n'
+                tb = str(response.proxy) + '\n' + reason + '\n'
         response.valid = tb is None
         response.traceback = tb
         await self.counter(response.valid)
@@ -166,7 +165,7 @@ class PatternManager(object):
     def status(self):
         items = list()
         now = datetime.datetime.now()
-        x = [(now-datetime.timedelta(minutes=i)).strftime("%H:%M") for i in range(9, -1, -1)]
+        x = [(now - datetime.timedelta(minutes=i)).strftime("%H:%M") for i in range(9, -1, -1)]
         patterns = self._patterns.values()
         for pattern in patterns:
             times, values = pattern.success_rate

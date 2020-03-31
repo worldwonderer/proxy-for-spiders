@@ -1,7 +1,6 @@
-import os
 import logging
 import logging.handlers
-
+import os
 
 CRITICAL = 50
 FATAL = CRITICAL
@@ -11,7 +10,6 @@ WARN = WARNING
 INFO = 20
 DEBUG = 10
 NOTSET = 0
-
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(CURRENT_PATH, 'log')

@@ -6,12 +6,11 @@ from aiohttp import web
 from multidict import CIMultiDict
 
 import log_utils
+from core.dashboard import dashboard
 from core.forwarder import forward
 from core.saver import Saver
-from core.dashboard import dashboard
 from models.pattern import Checker, PatternManager
 from models.proxy import ProxyManager
-
 
 logger = log_utils.LogHandler('server', file=True)
 

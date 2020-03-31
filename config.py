@@ -2,7 +2,6 @@ from os import getenv
 
 
 class Config(object):
-
     # redis db
     redis_host = getenv('redis_host', '127.0.0.1')
     redis_port = getenv('redis_port', 6379)

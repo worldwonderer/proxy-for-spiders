@@ -32,7 +32,7 @@ Multiple forwarding can increase the success rate of using free or unstable prox
 3. `python3 bench.py`
 
 ## config.py
-```shell
+```python
 # proxy_tower relies heavily on redis which is used for storing proxies and validation rules
 redis_host = getenv('redis_host', '127.0.0.1')
 redis_port = getenv('redis_port', 6379)
@@ -59,7 +59,7 @@ Currently support 2 kinds of verification rules
 1. `whitelist` If the response contains specified keywords, response is determined to be valid
 2. `xpath` If xpath can extract specified value from response, response is determined to be valid
 
-```shell
+```python
 import json
 import redis
 
@@ -77,7 +77,7 @@ After configuring the verification rule for the pattern `movie.douban.com/subjec
 
 You can add proxy source in `models/proxy.py` through file or API
 
-```
+```python
 # File
 class ProxyFile(ProxySource):
 

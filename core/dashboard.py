@@ -1,4 +1,5 @@
 import copy
+
 from aiohttp import web
 
 dashboard_data_template = {
