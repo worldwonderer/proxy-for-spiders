@@ -117,6 +117,9 @@ class ProxyManager(object):
             proxies = [p.to_dict() for p in proxies]
         return proxies
 
+    async def clean_proxies(self, pattern_str='public_proxies'):
+        await self.redis.delete(pattern_str)
+
     async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, mode='score'):
         proxies = await self.proxies(need_https, pattern_str)
         if mode == 'shuffle':
