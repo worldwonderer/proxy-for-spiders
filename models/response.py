@@ -14,6 +14,7 @@ class Response(ClientResponse):
     proxy = None
     valid = None
     traceback = None
+    cancelled = False
 
     def get_encoding(self):
         encoding = super(Response, self).get_encoding()
