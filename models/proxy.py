@@ -5,8 +5,6 @@ import re
 import time
 from collections import defaultdict
 
-import aioredis
-
 import log_utils
 from core.crawler import crawl
 from models.response import FailedResponse
@@ -92,21 +90,17 @@ class ProxyManager(object):
     RENEW_TIME = 8 * 60 * 60
     _last_add_time = defaultdict(int)
 
-    def __init__(self, config, redis_addr='redis://localhost', password=None, tags_source_map=None):
+    def __init__(self, config, redis, tags_source_map=None):
         self.config = config
-        self._redis_addr = redis_addr
-        self._password = password
+        self.redis = redis
         self.tags_source_map = tags_source_map or dict()
 
     async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr,
-                                                      password=self._password, encoding='utf8')
+        await self.add_proxies_for_pattern('public_proxies')
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.redis is not None:
-            self.redis.close()
-            await self.redis.wait_closed()
+        pass
 
     async def proxies(self, need_https=False, pattern_str='public_proxies', format_type='raw'):
         d = await self.redis.hgetall(pattern_str)

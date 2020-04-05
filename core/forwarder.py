@@ -4,6 +4,7 @@ from core.crawler import crawl
 
 
 async def forward(method, url, pam, pom, **kwargs):
+    session = kwargs.get('session')
     headers = kwargs.get('headers')
     content = kwargs.get('content')
     mode = kwargs.get('mode', 'score')
@@ -18,7 +19,7 @@ async def forward(method, url, pam, pom, **kwargs):
     proxies = await pom.select_proxies(pattern_str, need_https=need_https,
                                        prefer_used=True, mode=mode)
     pattern = pam.get_pattern(pattern_str)
-    return await crawl(method, url, proxies, pattern=pattern, data=content, headers=headers)
+    return await crawl(method, url, proxies, session=session, pattern=pattern, data=content, headers=headers)
 
 
 async def cookies_handler(headers, pam, pattern_str):

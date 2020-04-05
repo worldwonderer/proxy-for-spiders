@@ -11,6 +11,11 @@ from models.response import FailedResponse, Response
 logger = log_utils.LogHandler(__name__, file=True)
 
 
+def init_session():
+    conn = aiohttp.TCPConnector(limit=500, ttl_dns_cache=30*60)
+    return aiohttp.ClientSession(connector=conn)
+
+
 async def _crawl(method, url, session, **kwargs):
     proxy = kwargs.get('proxy')
     if proxy is not None:
@@ -46,7 +51,7 @@ async def crawl(method, url, proxies=None, **kwargs):
         proxies.append(None)
 
     pattern = kwargs.pop('pattern', None)
-    session = kwargs.get('session')
+    session = kwargs.pop('session', None)
 
     need_close_session = False
     if session is None:

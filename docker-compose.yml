@@ -7,8 +7,19 @@ services:
       - redis_host=redis
     ports:
       - "8893:8893"
-    links:
-      - redis
+    networks:
+      - app
   redis:
     image: "redis:latest"
     command: ["redis-server", "--bind", "redis", "--port", "6379"]
+    networks:
+      - app
+  nginx:
+    image: "nginx:latest"
+    ports:
+      - "8894:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf"
+      - "./dashboard/:/usr/share/nginx/dashboard"
+networks:
+  app:
