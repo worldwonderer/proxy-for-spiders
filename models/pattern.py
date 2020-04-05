@@ -6,7 +6,6 @@ import sys
 import traceback
 from collections import OrderedDict
 
-import aioredis
 from lxml import etree
 from pygtrie import CharTrie
 
@@ -123,25 +122,21 @@ class Pattern(object):
 
 class PatternManager(object):
 
-    def __init__(self, checker, saver, redis_addr='redis://localhost', password=None):
-        self._redis_addr = redis_addr
-        self._password = password
+    def __init__(self, checker, saver, redis):
+        self.redis = redis
         self.checker = checker
         self.saver = saver
         self._patterns = dict()
         self.key = 'response_check_pattern'
 
     async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr, password=self._password, encoding='utf8')
         self.t = await self._init_trie()
         self._patterns = {str(pattern): pattern for pattern in await self.patterns()}
         await self.add('public_proxies', None, None)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.redis is not None:
-            self.redis.close()
-            await self.redis.wait_closed()
+        pass
 
     async def pattern_count(self):
         return await self.redis.hlen(self.key)

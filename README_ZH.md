@@ -36,7 +36,7 @@
 redis_host = getenv('redis_host', 'redis')
 redis_port = getenv('redis_port', 6379)
 redis_db = getenv('redis_db', 0)
-redis_password = getenv('redis_password', '')
+redis_password = getenv('redis_password')
 redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
 
 # 更多配置，参见config.py
@@ -48,7 +48,7 @@ redis_addr = 'redis://{}:{}/{}'.format(redis_host, redis_port, redis_db)
 docker pull worldwonderer/proxy_tower
 docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_tower
 
-# 无redis服务，启用redis container
+# 无redis服务，利用docker-compose启用redis container，同时dashboard也会启动，推荐使用该方法
 cd proxy_tower/
 docker-compose up
 ```

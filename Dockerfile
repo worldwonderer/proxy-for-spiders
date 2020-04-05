@@ -29,4 +29,3 @@ WORKDIR /usr/src/app
 
 
 ENTRYPOINT [ "python", "proxy_entrance.py" ]
-

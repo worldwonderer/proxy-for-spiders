@@ -13,15 +13,15 @@ dashboard_data_template = {
 
 async def dashboard(request):
     dashboard_router = {
-        '/dev-api/patterns': patterns,
-        '/dev-api/pattern': pattern,
-        '/dev-api/proxies': proxies,
-        '/dev-api/user/login': login,
-        '/dev-api/user/logout': logout,
-        '/dev-api/user/info': user_info,
-        '/dev-api/status': status,
-        '/dev-api/index': index,
-        '/dev-api/config': config,
+        '/prod-api/patterns': patterns,
+        '/prod-api/pattern': pattern,
+        '/prod-api/proxies': proxies,
+        '/prod-api/user/login': login,
+        '/prod-api/user/logout': logout,
+        '/prod-api/user/info': user_info,
+        '/prod-api/status': status,
+        '/prod-api/index': index,
+        '/prod-api/config': config,
     }
     path = request.path
     if path in dashboard_router:
@@ -54,7 +54,8 @@ async def proxies(request):
 async def login(request):
     info = await request.json()
     username, password = info['username'], info['password']
-    if username == 'admin' and password == request.app['config'].secret:
+    # accept any password
+    if username == 'admin':
         return web.json_response(data={'code': 20000, 'data': {'token': 'admin'}})
     else:
         return web.json_response(data={'code': 60204, 'message': 'Account and password are incorrect.'})

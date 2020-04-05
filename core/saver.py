@@ -2,8 +2,6 @@ import asyncio
 import time
 from collections import defaultdict
 
-import aioredis
-
 from models.proxy import Proxy
 
 
@@ -13,19 +11,8 @@ class Saver(object):
     success_count = 0
     total_count = 0
 
-    def __init__(self, redis_addr='redis://localhost', password=None):
-        self._redis_addr = redis_addr
-        self._password = password
-
-    async def __aenter__(self):
-        self.redis = await aioredis.create_redis_pool(self._redis_addr,
-                                                      password=self._password, encoding='utf8')
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.redis is not None:
-            self.redis.close()
-            await self.redis.wait_closed()
+    def __init__(self, redis):
+        self.redis = redis
 
     async def _save(self, key, response):
         key += '_result'
