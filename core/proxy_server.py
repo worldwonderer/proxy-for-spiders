@@ -4,7 +4,6 @@ import psutil
 import aioredis
 from aiohttp import web
 import aiohttp_cors
-from multidict import CIMultiDict
 
 import log_utils
 from core.dashboard import dashboard
@@ -74,15 +73,6 @@ class ProxyServer(web.Application):
         await app['client_session'].close
         await app['redis'].close
 
-    @staticmethod
-    def _gen_headers(r):
-        res_headers = CIMultiDict()
-        if 'Set-Cookie' in r.headers:
-            for cookie in r.headers.getall('Set-Cookie'):
-                res_headers.add('Set-Cookie', cookie)
-        res_headers['Via-Proxy'] = str(r.proxy)
-        return res_headers
-
     async def receive_request(self, request):
         if request.url.host in request.app['ips']:
             return await dashboard(request)
@@ -90,20 +80,8 @@ class ProxyServer(web.Application):
             return await self.forward_request(request)
 
     async def forward_request(self, request):
-        pam = request.app['pam']
-        pom = request.app['pom']
-
-        body = await request.content.read()
         logger.info('received request {} from {}'.format(request.url, request.remote))
-
-        r = await forward(request.method, str(request.url), pam, pom, headers=request.headers, body=body,
-                          mode=request.app['config'].mode, session=request.app['client_session'])
-
-        if r is None or r.traceback or r.cancelled:
-            text = 'unable to get any response' if r is None else r.traceback
-            logger.warning("unable to get any valid response for {}".format(request.url))
-            return web.Response(status=417, text=text)
-        else:
-            text = await r.text()
-            logger.info("get valid response for {} via proxy {}".format(request.url, r.proxy))
-            return web.Response(status=r.status, text=text, headers=self._gen_headers(r))
+        body = await request.content.read()
+        return await forward(request.method, str(request.url), request.app['pam'], request.app['pom'],
+                             headers=request.headers, body=body, mode=request.app['config'].mode,
+                             session=request.app['client_session'])

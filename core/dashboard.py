@@ -105,7 +105,7 @@ async def config(request):
             if hasattr(request.app['config'], k):
                 data[k] = getattr(request.app['config'], k)
         return web.json_response(data={'code': 20000, 'data': data})
-    else:
+    elif request.method == "POST":
         data = await request.json()
         for k in data:
             if k in fields:
