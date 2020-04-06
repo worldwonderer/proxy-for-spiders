@@ -4,7 +4,7 @@ import requests
 from lxml import etree
 
 start_url = 'http://movie.douban.com/top250'
-pattern_api = 'http://127.0.0.1:8893/dev-api/pattern'
+pattern_api = 'http://127.0.0.1:8893/prod-api/pattern'
 pattern_data = {"pattern": "movie.douban.com/top250", "rule": "whitelist", "value": "rating_num"}
 proxies = {
     'http': 'http://127.0.0.1:8893',
