@@ -3,6 +3,7 @@ import json
 import random
 import re
 import time
+import warnings
 from collections import defaultdict
 
 import log_utils
@@ -86,7 +87,6 @@ class Proxy(object):
 
 
 class ProxyManager(object):
-    SCORE_RANDOM_SCOPE = 10
     RENEW_TIME = 8 * 60 * 60
     _last_add_time = defaultdict(int)
 
@@ -114,25 +114,26 @@ class ProxyManager(object):
     async def clean_proxies(self, pattern_str='public_proxies'):
         await self.redis.delete(pattern_str)
 
-    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, mode='score'):
+    async def select_proxies(self, pattern_str, need_https=False, prefer_used=True, economic=True, mode='combine'):
         proxies = await self.proxies(need_https, pattern_str)
+        concurrent_num = min(len(proxies), self.config.concurrent)
+
+        def prefer_used_selector(proxy):
+            score, used = proxy.score, proxy.used
+            if used and prefer_used and score > 0:
+                score *= 1.5
+            return score
         if mode == 'shuffle':
-            concurrent_num = min(len(proxies), self.config.concurrent)
+            if prefer_used:
+                warnings.warn("prefer used won't take affect when shuffle mode is on")
             selected_proxies = random.sample(proxies, concurrent_num)
+        elif mode == 'greedy':
+            selected_proxies = heapq.nlargest(concurrent_num, proxies, key=lambda a: prefer_used_selector(a))
         else:
-            scope = self.SCORE_RANDOM_SCOPE
-            n = min(scope, len(proxies))
-            concurrent_num = min(n, self.config.concurrent)
-
-            def selector(proxy):
-                score, used = proxy.score, proxy.used
-                if used and prefer_used:
-                    score *= 1.5
-                return score
-
+            n = min(2*concurrent_num, len(proxies))
             selected_proxies = random.sample(
                 heapq.nlargest(
-                    n, proxies, key=lambda a: selector(a)
+                    n, proxies, key=lambda a: prefer_used_selector(a)
                 ), concurrent_num
             )
         if economic:
@@ -249,5 +250,5 @@ class ProxyApi(ProxySource):
 proxy_sources = {
     ProxyFile('file', './conf/proxy.txt'),
     ProxyApi('free_api', 'http://122.51.7.207:5010/get_all/', 300)
-    # you can add your own proxy pool api here
+    # you can add your own proxy api here
 }

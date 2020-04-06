@@ -85,7 +85,6 @@ class Pattern(object):
                 tb = str(response.proxy) + '\n' + reason + '\n'
         response.valid = tb is None
         response.traceback = tb
-        await self.counter(response.valid)
         await self.score_and_save(response)
 
     async def counter(self, valid):
