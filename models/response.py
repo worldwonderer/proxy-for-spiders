@@ -1,4 +1,5 @@
 import json
+import time
 
 from aiohttp import ClientResponse
 
@@ -15,6 +16,7 @@ class Response(ClientResponse):
     valid = None
     traceback = None
     cancelled = False
+    request_data = None
 
     def get_encoding(self):
         encoding = super(Response, self).get_encoding()
@@ -30,5 +32,9 @@ class Response(ClientResponse):
             'valid': self.valid,
             'text': text,
             'proxy': str(self.proxy),
-            'traceback': self.traceback
+            'traceback': self.traceback,
+            'time': int(time.time()),
+            'headers': dict(self.request_info.headers),
+            'method': self.request_info.method,
+            'data': self.request_data
         })

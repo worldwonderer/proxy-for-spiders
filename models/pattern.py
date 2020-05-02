@@ -118,6 +118,11 @@ class Pattern(object):
     async def store(self, key, redis):
         await redis.hset(key, str(self), self.dumps())
 
+    async def recent_failed_request(self, redis):
+        key = self._pattern_str + '_result'
+        responses = await redis.lrange(key, 0, 29)
+        return [json.loads(info_json) for info_json in responses]
+
 
 class PatternManager(object):
 

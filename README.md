@@ -50,7 +50,7 @@ docker pull worldwonderer/proxy_tower
 docker run redis_host=<redis-ip> --env redis_port=<6379> --env redis_password=<foobared> -p 8893:8893 worldwonderer/proxy_tower
 
 # don't have existing redis
-# highly recommended approch which will start a webui simultaneously
+# highly recommended approach which starts a webui simultaneously
 cd proxy_tower/
 docker-compose up
 ```

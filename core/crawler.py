@@ -24,6 +24,7 @@ async def _crawl(method, url, session, **kwargs):
     try:
         async with session.request(method, url, **kwargs) as r:
             r.__class__ = Response
+            r.request_data = kwargs.get('data')
             await r.read()
     except asyncio.CancelledError:
         r = FailedResponse()
@@ -31,7 +32,7 @@ async def _crawl(method, url, session, **kwargs):
     except Exception as e:
         r = FailedResponse()
         r.traceback = str(proxy) + '\n' + ''.join(traceback.format_exception(*sys.exc_info())) + '\n'
-        # logger.debug(e, exc_info=True)
+        logger.warning(e, exc_info=True)
     r.proxy = proxy
     return r
 
