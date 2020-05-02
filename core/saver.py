@@ -37,7 +37,7 @@ class Saver(object):
             else:
                 proxy.score -= 1
                 remain_time = proxy.insert_time + proxy.valid_time - int(time.time())
-                if proxy.score <= -3 or (remain_time < 0 < proxy.valid_time):
+                if (proxy.score <= -3 or (remain_time < 0 < proxy.valid_time)) and pattern_str != 'public_proxies':
                     await self._del_proxy_in_pattern(pattern_str, proxy)
                     return
 
@@ -47,13 +47,14 @@ class Saver(object):
     async def save_result(self, pattern_str, proxy_str, response):
         tasks = [
             self._score_counter(pattern_str, proxy_str, response.valid),
-            self._save(proxy_str, response),
-            self._save(pattern_str, response)
         ]
+        if not response.valid:
+            tasks.append(self._save(proxy_str, response))
+            tasks.append(self._save(pattern_str, response))
         await asyncio.gather(*tasks)
 
     async def _del_proxy_in_pattern(self, pattern_str, proxy):
         fail_key = pattern_str + '_fail'
-        await self.redis.hdel(pattern_str, str(proxy))
         proxy.delete_time = int(time.time())
-        await proxy.store(fail_key, self.redis)
+        await asyncio.gather(*[self.redis.hdel(pattern_str, str(proxy)),
+                               proxy.store(fail_key, self.redis)])

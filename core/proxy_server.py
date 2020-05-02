@@ -70,8 +70,8 @@ class ProxyServer(web.Application):
         yield
         await app['pam'].__aexit__(None, None, None)
         await app['pom'].__aexit__(None, None, None)
-        await app['client_session'].close
-        await app['redis'].close
+        await app['client_session'].close()
+        await app['redis'].close()
 
     async def receive_request(self, request):
         if request.url.host in request.app['ips']:

@@ -22,6 +22,7 @@ async def dashboard(request):
         '/prod-api/status': status,
         '/prod-api/index': index,
         '/prod-api/config': config,
+        '/prod-api/recent_failed_request': recent_failed_request
     }
     path = request.path
     if path in dashboard_router:
@@ -95,6 +96,17 @@ async def pattern(request):
     elif request.method == 'DELETE':
         await request.app['pam'].delete(d['pattern'])
     return web.json_response(data={'code': 20000, 'message': 'success'})
+
+
+async def recent_failed_request(request):
+    d = await request.json()
+    pattern_str = d['pattern']
+    _pattern = request.app['pam'].get_pattern(pattern_str)
+    items = await _pattern.recent_failed_request(request.app['redis'])
+    r = copy.deepcopy(dashboard_data_template)
+    r['data']['items'] = items
+    r['data']['total'] = len(items)
+    return web.json_response(data=r)
 
 
 async def config(request):
