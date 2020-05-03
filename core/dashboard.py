@@ -1,6 +1,10 @@
 import copy
+import json
 
 from aiohttp import web
+
+from core.crawler import crawl
+from models.response import FailedResponse
 
 dashboard_data_template = {
     'code': 20000,
@@ -22,12 +26,31 @@ async def dashboard(request):
         '/prod-api/status': status,
         '/prod-api/index': index,
         '/prod-api/config': config,
-        '/prod-api/recent_failed_request': recent_failed_request
+        '/prod-api/recent_failed_request': recent_failed_request,
+        '/prod-api/debug': debug,
     }
     path = request.path
     if path in dashboard_router:
         return await dashboard_router[path](request)
     return web.Response(status=200, text="hello world")
+
+
+async def debug(request):
+    info = await request.json()
+    url = info['url']
+    method = info['method']
+    if isinstance(info['headers'], str):
+        headers = json.loads(info['headers'])
+    else:
+        headers = info['headers']
+    data = info['data']
+    proxy = info['proxy']
+    response = await crawl(method, url, [proxy], headers=headers, data=data)
+    if isinstance(response, FailedResponse):
+        html = response.traceback.replace('\n', '<br>')
+    else:
+        html = await response.text()
+    return web.json_response({'code': 20000, 'html': html})
 
 
 async def patterns(request):
